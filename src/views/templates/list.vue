@@ -124,7 +124,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="videoListVisible = false">取 消</el-button>
-        <el-button type="primary" @click="startMath" :disabled="selectedVideo === null">开 始 匹 配</el-button>
+        <el-button type="primary" :disabled="selectedVideo === null" @click="startMath">开 始 匹 配</el-button>
       </span>
     </el-dialog>
   </div>

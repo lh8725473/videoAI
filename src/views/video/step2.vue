@@ -24,13 +24,14 @@
           </el-col>
         </el-row>
         <el-row class="action-buttons">
-          <el-col :span="10"><el-button size="small" type="warning" @click="savePart()" disabled>保存片段</el-button></el-col>
+          <el-col :span="10"><el-button size="small" type="warning" disabled @click="savePart()">保存片段</el-button></el-col>
           <el-col :offset="1" :span="10"><el-button size="small" type="primary" @click="keyPeople()">下一步</el-button></el-col>
         </el-row>
         <el-image
           style="width: 200px; height: 200px"
           :src="url"
-          fit="contain"></el-image>
+          fit="contain"
+        />
       </el-col>
     </el-row>
     <!-- <div v-for="people in peoples" :key="people.reid">

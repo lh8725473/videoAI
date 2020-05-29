@@ -73,7 +73,7 @@ let store = []
  * 获取ports
  */
 export function getParts() {
-  if (store.length === 0 ) {
+  if (store.length === 0) {
     store = JSON.parse(JSON.stringify(baseParts))
   }
   return store
