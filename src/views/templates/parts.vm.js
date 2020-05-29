@@ -21,6 +21,54 @@ const baseParts = [
       {
         'frame_id': 126,
         'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/126_edit.png'
+      },
+      {
+        'frame_id': 21,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/21_edit.png'
+      },
+      {
+        'frame_id': 70,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/70_edit.png'
+      },
+      {
+        'frame_id': 98,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/98_edit.png'
+      },
+      {
+        'frame_id': 126,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/126_edit.png'
+      },
+      {
+        'frame_id': 21,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/21_edit.png'
+      },
+      {
+        'frame_id': 70,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/70_edit.png'
+      },
+      {
+        'frame_id': 98,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/98_edit.png'
+      },
+      {
+        'frame_id': 126,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/126_edit.png'
+      },
+      {
+        'frame_id': 21,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/21_edit.png'
+      },
+      {
+        'frame_id': 70,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/70_edit.png'
+      },
+      {
+        'frame_id': 98,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/98_edit.png'
+      },
+      {
+        'frame_id': 126,
+        'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/126_edit.png'
       }
     ],
     'template_id': 'eb1a4f16-08ae-44f0-9a29-88f7dd98196d',
