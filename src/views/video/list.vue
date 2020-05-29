@@ -81,7 +81,7 @@
 </template>
 
 <script>
-import { getVideoList, preClassify } from '@/api/video'
+import { getVideoList, preClassify, postKeyPeople } from '@/api/video'
 
 export default {
   filters: {
@@ -128,11 +128,12 @@ export default {
       })
     },
     preClassify(video) {
-      preClassify({
+      postKeyPeople({
         video_id: video.id
       }).then(response => {
+        console.log(response)
         if (response.code === 0) {
-          this.$router.push('/video/step1?video_id=' + video.id + '&task_id=' + response.data.task_id)
+          this.$router.push('/video/step2?video_id=' + video.id)
         }
       })
     },

@@ -198,7 +198,7 @@ export default {
       console.log(this.result)
     },
     keyPeople() {
-      this.$router.push('/video/step2?video_id=' + this.video_id + '&task_id=' + this.task_id)
+      this.$router.push('/video/step3?video_id=' + this.video_id + '&task_id=' + this.task_id)
       // keyPeople({
       //   task_id: this.task_id,
       //   video_id: this.video_id

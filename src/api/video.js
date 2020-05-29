@@ -80,3 +80,27 @@ export function createTemplate(data) {
   })
 }
 
+export function postKeyPeople(data) {
+  return request({
+    url: '/keypeople/key_people',
+    method: 'post',
+    data
+  })
+}
+
+export function getPeoples(params) {
+  return request({
+    url: '/keypeople/peoples',
+    method: 'get',
+    params
+  })
+}
+
+export function updatePeople(data) {
+  return request({
+    url: '/keypeople/update_people',
+    method: 'post',
+    data
+  })
+}
+

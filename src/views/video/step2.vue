@@ -6,31 +6,51 @@
       </el-col>
       <el-col :offset="1" :span="6">
         <el-tabs v-model="activePeople" type="card" @tab-click="handleClick">
-          <el-tab-pane v-for="(item, index) in result" :key="index" :label="item.people_number" :name="item.people_number" />
+          <el-tab-pane v-for="(item, index) in result" :key="index" :label="item.reid + ''" :name="item.reid + ''" />
         </el-tabs>
         <el-row>
-          <el-col :span="10">开始帧数</el-col>
-          <el-col :offset="1" :span="10">结束帧数</el-col>
-        </el-row>
-        <el-row v-for="(item, index) in part" :key="index">
           <el-col :span="10">
-            <el-input v-model="item[0]" size="mini" disabled />
+            reid:
           </el-col>
           <el-col :offset="1" :span="10">
-            <el-input v-model="item[1]" size="mini" disabled />
+            {{part.reid}}
           </el-col>
           <el-col :offset="1" :span="2">
-            <i class="el-icon-video-play" @click="playVideo(item)" />
+            <i class="el-icon-video-play" @click="playVideo()" />
           </el-col>
         </el-row>
-        <el-row class="action-buttons">
+        <el-row>
+          <el-col :span="8">
+            动作名称:
+          </el-col>
+          <el-col :offset="1" :span="12">
+            <el-input v-model="part.action_name" size="mini" />
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8">
+            重要人物:
+          </el-col>
+          <el-col :offset="1" :span="12">
+            <el-radio-group v-model="part.status">
+              <el-radio :label="'0'">是</el-radio>
+              <el-radio :label="'1'">否</el-radio>
+            </el-radio-group>
+          </el-col>
+        </el-row>
+        <!-- <el-row class="action-buttons">
           <el-col :span="10"><el-button size="small" type="warning" @click="savePart()" disabled>保存片段</el-button></el-col>
           <el-col :offset="1" :span="10"><el-button size="small" type="primary" @click="keyPeople()">下一步</el-button></el-col>
-        </el-row>
+        </el-row> -->
         <el-image
           style="width: 200px; height: 200px"
           :src="url"
           fit="contain"></el-image>
+        <el-row>
+          <el-col :offset="1" :span="12">
+            <el-button size="small" type="warning" @click="updatePeople()">保  存</el-button>
+          </el-col>
+        </el-row>  
       </el-col>
     </el-row>
     <!-- <div v-for="people in peoples" :key="people.reid">
@@ -56,6 +76,7 @@
         <el-button size="small" type="warning" @click="preFrameIndex()">上一帧</el-button>
         <el-button size="small" type="warning" @click="nextFrameIndex()">下一帧</el-button>
         <el-button type="primary" @click="goFrameIndex()">跳转当前帧</el-button>
+        <el-button type="primary" @click="preClassify()">下一步</el-button>
       </el-form-item>
     </el-form>
     <!-- <canvas id="canvas" width="300" height="300" /> -->
@@ -63,7 +84,7 @@
 </template>
 
 <script>
-import { getPreClassify, getKeyPeople } from '@/api/video'
+import { getKeyPeople, getPeoples, updatePeople, preClassify } from '@/api/video'
 import { fabric } from 'fabric'
 import _ from 'lodash'
 // const { fabric } = require('fabric')
@@ -127,7 +148,7 @@ export default {
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
-    this.getKeyPeople()
+    this.getPeoples()
     // this.$socket.on('key_people_response', (data) => {
     //   console.log(data)
     //   const people = _.find(this.peoples, { 'reid': data.data.reid })
@@ -261,30 +282,27 @@ export default {
         url = null
       }
     },
-    getKeyPeople() {
-      getKeyPeople({
-        video_id: this.video_id,
-        task_id: this.task_id
+    getPeoples() {
+      getPeoples({
+        video_id: this.video_id
       }).then(response => {
-        console.log(response)
         this.result = response.data
-        this.activePeople = this.result[0].people_number
-        this.part = this.result[0].part
-        this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_img
-        this.taskInfo = response.data
+        this.activePeople = this.result[0].reid + ''
+        this.part = this.result[0]
+        this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
+        // this.taskInfo = response.data
       })
     },
     handleClick(tab) {
-      this.part = this.result[tab.index].part
-      this.url = process.env.VUE_APP_BASE_API + this.result[tab.index].reid_img
+      this.activePeople = this.result[tab.index].reid + ''
+      this.part = this.result[tab.index]
+      this.url = process.env.VUE_APP_BASE_API + this.result[tab.index].reid_path
     },
-    playVideo(item) {
+    playVideo() {
       this.$socket.emit('play', {
         'step': parseInt(this.formInline.step),
-        'task_id': this.task_id,
         'video_id': this.video_id,
-        'reid': this.activePeople,
-        'part': item
+        'reid': this.activePeople
       })
     },
     preFrameIndex() {
@@ -315,6 +333,23 @@ export default {
     },
     keyPeople() {
       this.$router.push('/video/step3?video_id=' + this.video_id + '&task_id=' + this.task_id)
+    },
+    updatePeople() {
+      updatePeople(this.part).then(response => {
+        if (response.code === 0) {
+          this.$message('保存关键人物成功！')
+        }
+      })
+    },
+    preClassify() {
+      preClassify({
+        video_id: this.video_id
+      }).then(response => {
+        console.log(response)
+        if (response.code === 0) {
+          this.$router.push('/video/step1?video_id=' + this.video_id + '&task_id=' + response.data.task_id)
+        }
+      })
     }
   }
 }
