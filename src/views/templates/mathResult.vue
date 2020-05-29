@@ -7,10 +7,9 @@
           <span class="tip">匹配结果: {{ part.status | status }}</span>
           <span class="tip">匹配率: {{ part.value * 100 }}%</span>
         </template>
-        <hr>
-        <p>模版</p>
         <el-row>
           <div class="scroll-warp">
+            <p>模版</p>
             <div v-for="img in part.template_frame_list" :key="img.frame_id" class="block">
               <el-image
                 style="width: 200px; height: 200px"
@@ -20,12 +19,7 @@
               />
               <span class="demonstration">帧号：{{ img.frame_id }}</span>
             </div>
-          </div>
-        </el-row>
-        <hr>
-        <p>匹配</p>
-        <el-row>
-          <div class="scroll-warp">
+            <p>匹配</p>
             <div v-for="img in part.match_frame_list" :key="img.frame_id" class="block">
               <el-image
                 style="width: 200px; height: 200px"
@@ -55,7 +49,7 @@ export default {
       } else if (s === -100) {
         return '匹配失败'
       } else {
-        return '无'
+        return '匹配中'
       }
     }
   },
@@ -144,7 +138,7 @@ export default {
   }
 }
 .scroll-warp{
-  height: 250px;
+  height: 500px;
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
