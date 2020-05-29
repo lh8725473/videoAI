@@ -38,9 +38,17 @@
                   <el-tab-pane label="人物关节点/距离" name="人物关节点/距离">
                     <el-row>
                       <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">距离</el-col>
-                      <el-col :offset="1" :span="5">阈值</el-col>
-                      <el-col :offset="1" :span="5">权重</el-col>
+                      <el-col :offset="1" :span="5">距离(px)</el-col>
+                      <el-col :offset="1" :span="5">阈值(±0.5)
+                        <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
+                          <i class="el-icon-warning-outline"></i>
+                        </el-tooltip>
+                      </el-col>
+                      <el-col :offset="1" :span="5">权重(0-1)
+                        <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
+                          <i class="el-icon-warning-outline"></i>
+                        </el-tooltip>
+                      </el-col>
                     </el-row>
                     <el-row v-for="(item, index) in imgDetail.inclination" :key="index">
                       <el-col :span="5">
@@ -60,9 +68,17 @@
                   <el-tab-pane label="人物关节点/角度" name="人物关节点/角度">
                     <el-row>
                       <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">角度</el-col>
-                      <el-col :offset="1" :span="5">阈值</el-col>
-                      <el-col :offset="1" :span="5">权重</el-col>
+                      <el-col :offset="1" :span="5">角度(度数)</el-col>
+                      <el-col :offset="1" :span="5">阈值(±60°)
+                        <el-tooltip class="item" effect="dark" content="角度阈值±60°内可选" placement="top-start">
+                          <i class="el-icon-warning-outline"></i>
+                        </el-tooltip>
+                      </el-col>
+                      <el-col :offset="1" :span="5">权重(0-1)
+                        <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
+                          <i class="el-icon-warning-outline"></i>
+                        </el-tooltip>
+                      </el-col>
                     </el-row>
                     <el-row v-for="(item, index) in imgDetail.vertical" :key="index">
                       <el-col :span="5">
@@ -82,9 +98,17 @@
                   <el-tab-pane label="人与静止物体距离" name="人与静止物体距离">
                     <el-row>
                       <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">距离</el-col>
-                      <el-col :offset="1" :span="5">阈值</el-col>
-                      <el-col :offset="1" :span="5">权重</el-col>
+                      <el-col :offset="1" :span="5">距离(px)</el-col>
+                      <el-col :offset="1" :span="5">阈值(±0.5)
+                        <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
+                          <i class="el-icon-warning-outline"></i>
+                        </el-tooltip>
+                      </el-col>
+                      <el-col :offset="1" :span="5">权重(0-1)
+                        <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
+                          <i class="el-icon-warning-outline"></i>
+                        </el-tooltip>
+                      </el-col>
                     </el-row>
                     <el-row v-for="(item, index) in imgDetail.ob" :key="index">
                       <el-col :span="5">
