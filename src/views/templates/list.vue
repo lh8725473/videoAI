@@ -133,6 +133,7 @@
 <script>
 import { getVideoList, preClassify } from '@/api/video'
 import { getTemplateList, startTemplateMatch } from '@/api/templates'
+import { setParts } from './parts.vm'
 import _ from 'lodash'
 
 export default {
@@ -177,7 +178,9 @@ export default {
       },
       videoListVisible: false,
       multipleSelection: null,
-      selectedVideo: null
+      selectedVideo: null,
+      // element $loading()
+      loading: null
     }
   },
   created() {
@@ -228,11 +231,14 @@ export default {
       this.selectedVideo = video
     },
     startMath() {
+      this.loading = this.$loading({ fullscreen: true })
       startTemplateMatch({
         video_id: this.selectedVideo.id,
         template_id: _.map(this.multipleSelection, 'template_id')
       }).then(response => {
-        console.log(response)
+        setParts(response.data)
+        this.loading.close()
+        this.$router.push({ name: 'mathResult' })
       })
     }
   }
