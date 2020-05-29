@@ -202,6 +202,16 @@ export default {
         this.$message.error(res.message)
       }
     })
+    this.$socket.on('key_people_list', (res) => {
+      if (res.code === 0) {
+        this.result = res.data
+        this.activePeople = this.result[0].reid + ''
+        this.part = this.result[0]
+        this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
+      } else {
+        this.$message.error(res.message)
+      }
+    })
     // var canvas = new fabric.Canvas('canvas')
 
     // var rect = new fabric.Rect({

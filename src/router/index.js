@@ -78,6 +78,7 @@ export const constantRoutes = [
     {
       path: 'mathResult',
       name: 'mathResult',
+      hidden: true,
       component: () => import('@/views/templates/mathResult'),
       meta: { title: '匹配结果', icon: 'form' }
     }]

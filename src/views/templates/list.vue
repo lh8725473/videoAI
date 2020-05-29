@@ -45,15 +45,6 @@
           {{ scope.row.create_time }}
         </template>
       </el-table-column>
-      <el-table-column
-        fixed="right"
-        label="操作"
-        width="100"
-      >
-        <template slot-scope="scope">
-          <el-button type="text" size="small" @click="preClassify(scope.row)">视频分析</el-button>
-        </template>
-      </el-table-column>
     </el-table>
 
     <el-pagination
@@ -124,7 +115,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="videoListVisible = false">取 消</el-button>
-        <el-button type="primary" @click="startMath" :disabled="selectedVideo === null">开 始 匹 配</el-button>
+        <el-button type="primary" :disabled="selectedVideo === null" @click="startMath">开 始 匹 配</el-button>
       </span>
     </el-dialog>
   </div>
@@ -133,6 +124,7 @@
 <script>
 import { getVideoList, preClassify } from '@/api/video'
 import { getTemplateList, startTemplateMatch } from '@/api/templates'
+import { setParts } from './parts.vm'
 import _ from 'lodash'
 
 export default {
@@ -177,7 +169,9 @@ export default {
       },
       videoListVisible: false,
       multipleSelection: null,
-      selectedVideo: null
+      selectedVideo: null,
+      // element $loading()
+      loading: null
     }
   },
   created() {
@@ -228,11 +222,14 @@ export default {
       this.selectedVideo = video
     },
     startMath() {
+      this.loading = this.$loading({ fullscreen: true })
       startTemplateMatch({
         video_id: this.selectedVideo.id,
         template_id: _.map(this.multipleSelection, 'template_id')
       }).then(response => {
-        console.log(response)
+        setParts(response.data)
+        this.loading.close()
+        this.$router.push({ name: 'mathResult' })
       })
     }
   }

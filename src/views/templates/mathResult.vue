@@ -3,117 +3,77 @@
     <el-collapse v-model="activePart">
       <el-collapse-item v-for="part in parts" :key="part.partFrames" :name="part.partFrames">
         <template slot="title">
-          {{ part.template_name }}
-          <span>{{ part.status }}</span>
-          <span>{{ part.value }}</span>
+          <span class="tip">动作: {{ part.template_name }}</span>
+          <span class="tip">匹配结果: {{ part.status | status }}</span>
+          <span class="tip">匹配率: {{ part.value * 100 }}%</span>
         </template>
-        <div v-for="img in part.template_frame_list" :key="img.frame_id" class="block">
-          <el-image
-            style="width: 200px; height: 200px"
-            :src="baseAPI + img.frame_path"
-            fit="contain"
-            @click="addImg(img, part)"
-          />
-          <span class="demonstration">帧号：{{ img.frame_id }}</span>
-        </div>
-        <div v-for="img in part.match_frame_list" :key="img.frame_id" class="block">
-          <el-image
-            style="width: 200px; height: 200px"
-            :src="baseAPI + img.frame_path"
-            fit="contain"
-            @click="addImg(img, part)"
-          />
-          <span class="demonstration">帧号：{{ img.frame_id }}</span>
-        </div>
+        <hr>
+        <p>模版</p>
+        <el-row>
+          <div class="scroll-warp">
+            <div v-for="img in part.template_frame_list" :key="img.frame_id" class="block">
+              <el-image
+                style="width: 200px; height: 200px"
+                :src="baseAPI + img.frame_path"
+                fit="contain"
+                @click="addImg(img, part)"
+              />
+              <span class="demonstration">帧号：{{ img.frame_id }}</span>
+            </div>
+          </div>
+        </el-row>
+        <hr>
+        <p>匹配</p>
+        <el-row>
+          <div class="scroll-warp">
+            <div v-for="img in part.match_frame_list" :key="img.frame_id" class="block">
+              <el-image
+                style="width: 200px; height: 200px"
+                :src="baseAPI + img.frame_path"
+                fit="contain"
+                @click="addImg(img, part)"
+              />
+              <span class="demonstration">帧号：{{ img.frame_id }}</span>
+            </div>
+          </div>
+        </el-row>
       </el-collapse-item>
     </el-collapse>
   </div>
 </template>
 
 <script>
-import { getKeyFrames, getImageFeature, createTemplate } from '@/api/video'
-import { fabric } from 'fabric'
-import _ from 'lodash'
-// const { fabric } = require('fabric')
+import { getParts, setParts } from './parts.vm'
 
 export default {
   filters: {
-
+    status: s => {
+      if (s === 0) {
+        return '匹配成功'
+      } else if (s === 1) {
+        return '跳过'
+      } else if (s === -100) {
+        return '匹配失败'
+      } else {
+        return '无'
+      }
+    }
   },
   data() {
     return {
       baseAPI: process.env.VUE_APP_BASE_API,
       activePart: [],
-      parts: [
-        {
-          'match_frame_list': [
-
-          ],
-          'status': null,
-          'template_frame_list': [
-            {
-              'frame_id': 21,
-              'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/21_edit.png'
-            },
-            {
-              'frame_id': 70,
-              'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/70_edit.png'
-            },
-            {
-              'frame_id': 98,
-              'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/98_edit.png'
-            },
-            {
-              'frame_id': 126,
-              'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/0_5.62/126_edit.png'
-            }
-          ],
-          'template_id': 'eb1a4f16-08ae-44f0-9a29-88f7dd98196d',
-          'template_name': '抬桶',
-          'value': null
-        },
-        {
-          'match_frame_list': [
-
-          ],
-          'status': null,
-          'template_frame_list': [
-            {
-              'frame_id': 142,
-              'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/5.67_6.67/142_edit.png'
-            }
-          ],
-          'template_id': 'b893a8b2-229e-4e9a-b751-914f884ea56e',
-          'template_name': '行走',
-          'value': null
-        },
-        {
-          'match_frame_list': [
-
-          ],
-          'status': null,
-          'template_frame_list': [
-            {
-              'frame_id': 169,
-              'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/6.71_9.96/169_edit.png'
-            },
-            {
-              'frame_id': 218,
-              'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/6.71_9.96/218_edit.png'
-            },
-            {
-              'frame_id': 231,
-              'frame_path': '/sources/keyFrames/5967db89-63bc-477e-bb7a-6f860e7dd30f/1/6.71_9.96/231_edit.png'
-            }
-          ],
-          'template_id': '940ee67c-3d7f-4aa4-92cb-d1f6b36b0825',
-          'template_name': '起跳',
-          'value': null
-        }
-      ]
+      parts: []
     }
   },
   created() {
+    this.$socket.on('template_match', resp => {
+      if (resp.code === 0) {
+        setParts(resp.data)
+      }
+      this.parts = getParts()
+    })
+    this.parts = getParts()
   },
   mounted() {
   },
@@ -162,11 +122,37 @@ export default {
   text-align: center;
   display: inline-block;
   width: 200px;
+  height: 230px;
   box-sizing: border-box;
   margin-right: 10px;
 }
 .el-image{
   cursor: pointer;
+  background: #F5F7FA;
 }
+.tip{
+  margin-right: 20px;
+  padding: 0 20px 0 0;
+  font-size: 14px;
+}
+.app-container {
+  p {
+    margin: 0;
+  }
+  hr{
+    opacity: 0.2;
+  }
+}
+.scroll-warp{
+  height: 250px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap
+}
+.demonstration{
+  display: block;
+}
+
 </style>
 
