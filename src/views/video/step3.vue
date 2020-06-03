@@ -9,14 +9,27 @@
           {{ part.partName }} (共{{ part.imgs.length }}张)
           <el-button type="primary" size="mini" style="margin-left: 20px" @click.stop="saveDom(part)">保存片段</el-button>
         </template>
-        <div v-for="img in part.imgs" :key="img.frame_index" class="block">
-          <el-image
-            style="width: 200px; height: 200px"
-            :src="baseAPI + img.frame_path"
-            fit="contain"
-            @click="addImg(img, part)"
-          />
-          <span class="demonstration">帧号：{{ img.frame_index }}</span>
+        <div id="partimgs">
+          <div v-for="img in part.imgs" :key="img.frame_index" class="block">
+            <el-image
+              style="width: 200px; height: 200px"
+              :src="baseAPI + img.frame_path"
+              fit="contain"
+              @click="addImg(img, part)"
+            />
+            <span class="demonstration">帧号：{{ img.frame_index }}</span>
+          </div>
+        </div>
+
+        <div id="addpartimgs">
+          <div v-for="img in part.imgs" :key="img.frame_index" class="block">
+            <el-image
+              style="width: 200px; height: 200px"
+              :src="baseAPI + img.frame_path"
+              fit="contain"
+            />
+            <span class="demonstration">帧号：{{ img.frame_index }}</span>
+          </div>
         </div>
 
         <el-tabs v-model="part.activeImg">
@@ -41,12 +54,12 @@
                       <el-col :offset="1" :span="5">距离(px)</el-col>
                       <el-col :offset="1" :span="5">阈值(±0.5)
                         <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
-                          <i class="el-icon-warning-outline"></i>
+                          <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                       <el-col :offset="1" :span="5">权重(0-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
-                          <i class="el-icon-warning-outline"></i>
+                          <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                     </el-row>
@@ -71,12 +84,12 @@
                       <el-col :offset="1" :span="5">角度(度数)</el-col>
                       <el-col :offset="1" :span="5">阈值(±60°)
                         <el-tooltip class="item" effect="dark" content="角度阈值±60°内可选" placement="top-start">
-                          <i class="el-icon-warning-outline"></i>
+                          <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                       <el-col :offset="1" :span="5">权重(0-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
-                          <i class="el-icon-warning-outline"></i>
+                          <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                     </el-row>
@@ -101,12 +114,12 @@
                       <el-col :offset="1" :span="5">距离(px)</el-col>
                       <el-col :offset="1" :span="5">阈值(±0.5)
                         <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
-                          <i class="el-icon-warning-outline"></i>
+                          <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                       <el-col :offset="1" :span="5">权重(0-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
-                          <i class="el-icon-warning-outline"></i>
+                          <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                     </el-row>
@@ -146,6 +159,7 @@
 </template>
 
 <script>
+import { Sortable, Swap } from 'sortablejs/modular/sortable.core.esm'
 import { getKeyFrames, getImageFeature, createTemplate } from '@/api/video'
 import { fabric } from 'fabric'
 import _ from 'lodash'
@@ -193,6 +207,27 @@ export default {
     })
   },
   mounted() {
+    setTimeout(() => {
+      Sortable.mount(new Swap())
+      var el = document.getElementById('partimgs')
+      console.log(el)
+      var sortable = new Sortable(el, {
+        group: {
+          name: 'shared',
+          pull: 'clone',
+          put: false // Do not allow items to be put into this list
+        },
+        animation: 150,
+        sort: false // To disable sorting: set sort to false
+      })
+
+      var addel = document.getElementById('addpartimgs')
+      console.log(addel)
+      var addSortable = new Sortable(addel, {
+        group: 'shared',
+        animation: 150
+      })
+    }, 3000)
     // this.$socket.on('key_frame_response', (res) => {
     //   console.log(res)
     //   if (res.code === 0) {

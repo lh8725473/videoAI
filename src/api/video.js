@@ -104,3 +104,11 @@ export function updatePeople(data) {
   })
 }
 
+export function savePreClassify(data) {
+  return request({
+    url: '/task/save_pre_classify',
+    method: 'post',
+    data
+  })
+}
+

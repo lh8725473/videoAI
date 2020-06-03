@@ -1,7 +1,10 @@
 <template>
   <div class="wscn-http404-container">
     <div class="wscn-http404">
-      <div class="pic-404">
+      <ul id="items">
+        <li v-for="(item, index) in items" :key="index">item {{ item.name }}</li>
+      </ul>
+      <!-- <div class="pic-404">
         <img class="pic-404__parent" src="@/assets/404_images/404.png" alt="404">
         <img class="pic-404__child left" src="@/assets/404_images/404_cloud.png" alt="404">
         <img class="pic-404__child mid" src="@/assets/404_images/404_cloud.png" alt="404">
@@ -15,24 +18,112 @@
         <div class="bullshit__headline">{{ message }}</div>
         <div class="bullshit__info">Please check that the URL you entered is correct, or click the button below to return to the homepage.</div>
         <a href="" class="bullshit__return-home">Back to home</a>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
 
 <script>
+import { Sortable, Swap } from 'sortablejs/modular/sortable.core.esm'
+import _ from 'lodash'
 
 export default {
   name: 'Page404',
+  data() {
+    return {
+      items: [
+        {
+          id: 1,
+          name: '1111'
+        },
+        {
+          id: 2,
+          name: '2222'
+        },
+        {
+          id: 3,
+          name: '333'
+        },
+        {
+          id: 4,
+          name: '4444'
+        },
+        {
+          id: 5555,
+          name: '5555'
+        },
+        {
+          id: 6,
+          name: '666'
+        },
+        {
+          id: 7,
+          name: '7777'
+        }
+      ]
+    }
+  },
   computed: {
     message() {
       return 'The webmaster said that you can not enter this page...'
     }
+  },
+  mounted() {
+    Sortable.mount(new Swap())
+    var el = document.getElementById('items')
+    var sortable = new Sortable(el, {
+      swap: true,
+      swapClass: 'highlighted',
+      ghostClass: 'ghost',
+      dragClass: 'dragClass',
+      chosenClass: 'chosenClass',
+      // sort: false,
+      // disabled: true,
+      onEnd: (evt) => {
+        console.log(evt)
+        console.log(evt.oldIndex)
+        console.log(evt.newIndex)
+        console.log(evt.oldDraggableIndex)
+        console.log(evt.newDraggableIndex)
+        var tagItem = this.items[evt.newIndex]
+        this.items.splice(evt.oldIndex, 1)
+        // var removeItem = _.remove(this.items, (n, index) => {
+        //   return index === evt.oldIndex
+        // })
+        console.log(tagItem)
+        // console.log(removeItem)
+        console.log(this.items)
+        // this.items = [{
+        //   id: 6,
+        //   name: '666'
+        // },
+        // {
+        //   id: 7,
+        //   name: '7777'
+        // }]
+      }
+    })
   }
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
+.highlighted{
+  background-color: rgb(186, 241, 154);
+}
+
+.ghost{
+  background-color: rgb(163, 154, 241);
+}
+
+.dragClass{
+  background-color: rgb(241, 154, 195);
+}
+
+.chosenClass{
+  background-color: rgb(240, 241, 154);
+}
+
 .wscn-http404-container{
   transform: translate(-50%,-50%);
   position: absolute;

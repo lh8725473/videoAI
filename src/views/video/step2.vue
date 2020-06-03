@@ -20,18 +20,18 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="8">
+          <el-col :span="8" style="line-height: 36px;">
             动作名称:
           </el-col>
           <el-col :offset="1" :span="12">
-            <el-input v-model="part.action_name" size="mini" />
+            <el-input v-model="part.action_name" size="medium" />
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="8">
+          <el-col :span="8" style="line-height: 36px;">
             重要人物:
           </el-col>
-          <el-col :offset="1" :span="12">
+          <el-col :offset="1" :span="12" style="line-height: 36px;">
             <el-radio-group v-model="part.status">
               <el-radio :label="'0'">是</el-radio>
               <el-radio :label="'1'">否</el-radio>
@@ -47,10 +47,10 @@
           :src="url"
           fit="contain"></el-image>
         <el-row>
-          <el-col :offset="1" :span="12">
-            <el-button size="small" type="warning" @click="updatePeople()">保  存</el-button>
+          <el-col :span="12">
+            <el-button size="medium" type="warning" @click="updatePeople()">保    存</el-button>
           </el-col>
-        </el-row>  
+        </el-row>
       </el-col>
     </el-row>
     <!-- <div v-for="people in peoples" :key="people.reid">

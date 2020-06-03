@@ -1,39 +1,59 @@
 <template>
   <div class="app-container">
     <el-row>
-      <el-col :span="16">
+      <el-col :span="12">
         <video ref="video" width="100%" height="480" :src="baseAPI + videoInfo.path" controls="controls">
           your browser does not support the video tag
         </video>
       </el-col>
-      <el-col v-show="taskInfo.status === '2'" :offset="1" :span="6">
+      <el-col v-show="taskInfo.status === '2'" :offset="1" :span="11">
+        <el-button v-show="!isEdit" size="small" type="primary" style="position:absolute;right: 0;top: 2px; z-index: 2;" @click="isEdit = true">编 辑</el-button>
+        <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 0px;top: 2px; z-index: 2;" @click="savePart()">完 成</el-button>
+        <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 66px;top: 2px; z-index: 2;" :disabled="btnsDis.delete" @click="deletePart()">删 除</el-button>
+        <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 132px;top: 2px; z-index: 2;" :disabled="btnsDis.merge" @click="mergePart()">合 并</el-button>
+        <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 198px;top: 2px; z-index: 2;" @click="addPart()">增 加</el-button>
         <el-tabs v-model="activePeople" type="card" @tab-click="handleClick">
-          <el-tab-pane v-for="(item, index) in result" :key="index" :label="item.people_number" :name="item.people_number" />
+          <el-tab-pane v-for="(item, index) in result" :key="index" :label="item.people_number + ''" :name="item.people_number + ''" />
         </el-tabs>
         <el-row>
-          <el-col :span="10">开始时间</el-col>
-          <el-col :offset="1" :span="10">结束时间</el-col>
+          <el-col :span="6">动作名</el-col>
+          <el-col :offset="1" :span="4">开始帧</el-col>
+          <el-col :offset="1" :span="4">结束帧</el-col>
+          <el-col :offset="1" :span="5">时间段(秒)</el-col>
         </el-row>
         <el-row v-for="(item, index) in part" :key="index">
-          <el-col :span="10">
-            <el-input v-model="item[0]" size="mini" />
+          <el-col v-show="isEdit" :span="6">
+            <el-col :span="4" style="line-height: 28px;">
+              <el-checkbox v-model="item.checked" @change="checkedChange" />
+            </el-col>
+            <el-col :span="20">
+              <el-input v-model="item.name" size="mini" />
+            </el-col>
           </el-col>
-          <el-col :offset="1" :span="10">
-            <el-input v-model="item[1]" size="mini" />
+          <el-col v-show="!isEdit" :span="6">
+            <el-input v-model="item.name" size="mini"  disabled/>
           </el-col>
-          <el-col :offset="1" :span="2">
+          <el-col :offset="1" :span="4">
+            <el-input v-model="item.start_frame_index" size="mini" :disabled="!isEdit"/>
+          </el-col>
+          <el-col :offset="1" :span="4">
+            <el-input v-model="item.end_frame_index" size="mini" :disabled="!isEdit"/>
+          </el-col>
+          <el-col :offset="1" :span="5" style="line-height: 28px;">
+            {{ item.start_time | timeFilter(item, fps) }}
+          </el-col>
+          <el-col :offset="1" :span="1">
             <i class="el-icon-video-play" @click="playVideo(item)" />
           </el-col>
-        </el-row>
-        <el-row class="action-buttons">
-          <el-col :span="10"><el-button size="small" type="warning" disabled @click="savePart()">保存片段</el-button></el-col>
-          <el-col :offset="1" :span="10"><el-button size="small" type="primary" @click="keyPeople()">下一步</el-button></el-col>
         </el-row>
         <el-image
           style="width: 200px; height: 200px"
           :src="url"
           fit="contain"
         />
+        <el-row class="action-buttons">
+          <el-col :span="10"><el-button size="small" type="primary" @click="keyPeople()">下一步</el-button></el-col>
+        </el-row>
       </el-col>
       <el-col v-show="taskInfo.status === '1'" :offset="1" :span="6">
         <div class="loading-div">
@@ -58,6 +78,26 @@
       fit
       highlight-current-row
     >
+      <el-table-column label="动作名">
+        <template slot-scope="scope">
+          {{ scope.row.name }}
+        </template>
+      </el-table-column>
+      <el-table-column label="开始/结束帧" width="100">
+        <template slot-scope="scope">
+          {{ scope.row.start_frame_index }} 至 {{ scope.row.end_frame_index }}
+        </template>
+      </el-table-column>
+      <el-table-column label="开始/结束帧" width="100">
+        <template slot-scope="scope">
+          {{ scope.row.start_frame_index }} 至 {{ scope.row.end_frame_index }}
+        </template>
+      </el-table-column>
+      <el-table-column label="人物REID" width="100">
+        <template slot-scope="scope">
+          {{ scope.row.reid }}
+        </template>
+      </el-table-column>
       <el-table-column label="创建时间" width="180">
         <template slot-scope="scope">
           {{ scope.row.create_time }}
@@ -73,17 +113,13 @@
           <span>{{ scope.row.status | statusFilter }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="分析结果" align="center">
-        <template slot-scope="scope">
-          {{ scope.row.result }}
-        </template>
-      </el-table-column>
     </el-table>
   </div>
 </template>
 
 <script>
-import { getPreClassify, getPreClassifyList, getVideoInfo, keyPeople } from '@/api/video'
+import { getPreClassify, getPreClassifyList, getVideoInfo, keyPeople, savePreClassify } from '@/api/video'
+import _ from 'lodash'
 
 export default {
   filters: {
@@ -102,11 +138,16 @@ export default {
         '1': '人工修正'
       }
       return operationText[fun]
+    },
+    timeFilter(start_time, item, fps) {
+      const srartString = item.start_frame_index === 1 ? 0 : (item.start_frame_index / fps).toFixed(2)
+      return srartString + '至' + (item.end_frame_index / fps).toFixed(2)
     }
   },
   data() {
     return {
       baseAPI: process.env.VUE_APP_BASE_API,
+      isEdit: false,
       form: {
 
       },
@@ -114,9 +155,15 @@ export default {
       part: [],
       activePeople: '',
       taskInfo: {},
+      nbFrames: 0,
+      fps: 0,
       videoInfo: {},
       preClassifyList: [],
-      url: ''
+      url: '',
+      btnsDis: {
+        delete: false,
+        merge: false
+      }
     }
   },
   created() {
@@ -128,12 +175,18 @@ export default {
     this.$socket.on('pre_classfily_response', (data) => {
       if (data.data.task_id === this.task_id) {
         this.result = data.data.data
-        if (this.result) {
-          this.activePeople = this.result[0].people_number
+        if (this.result.length > 0) {
+          this.activePeople = this.result[0].people_number + ''
           this.part = this.result[0].part
+          _.forEach(this.part, (item) => {
+            this.$set(item, 'checked', false)
+          })
           this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_img
-          this.taskInfo.status = data.data.status
         }
+
+        this.taskInfo = data.data
+        this.nbFrames = this.taskInfo.nb_frames
+        this.fps = this.taskInfo.fps
       }
     })
   },
@@ -150,14 +203,19 @@ export default {
         video_id: this.video_id,
         task_id: this.task_id
       }).then(response => {
-        this.result = response.data.result
-        if (this.result) {
-          this.activePeople = this.result[0].people_number
+        this.result = response.data.data
+        if (this.result.length > 0) {
+          this.activePeople = this.result[0].people_number + ''
           this.part = this.result[0].part
+          _.forEach(this.part, (item) => {
+            this.$set(item, 'checked', false)
+          })
           this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_img
         }
 
         this.taskInfo = response.data
+        this.nbFrames = this.taskInfo.nb_frames
+        this.fps = this.taskInfo.fps
       })
     },
     getPreClassifyList() {
@@ -171,13 +229,15 @@ export default {
     },
     playVideo(item) {
       const videoDom = this.$refs.video
+      const start = (item.start_frame_index / this.fps)
+      const end = (item.end_frame_index / this.fps)
       var fun = function() {
-        if (videoDom.currentTime >= item[1]) {
+        if (videoDom.currentTime >= end) {
           videoDom.pause()
           videoDom.removeEventListener('timeupdate', fun)
         }
       }
-      videoDom.currentTime = item[0]
+      videoDom.currentTime = start
       videoDom.addEventListener('timeupdate', fun)
       videoDom.play()
     },
@@ -192,10 +252,18 @@ export default {
     },
     handleClick(tab) {
       this.part = this.result[tab.index].part
+      _.forEach(this.part, (item) => {
+        this.$set(item, 'checked', false)
+      })
       this.url = process.env.VUE_APP_BASE_API + this.result[tab.index].reid_img
     },
     savePart() {
-      console.log(this.result)
+      savePreClassify(this.taskInfo).then(response => {
+        if (response.code === 0) {
+          this.$message('保存成功')
+          this.isEdit = false
+        }
+      })
     },
     keyPeople() {
       this.$router.push('/video/step3?video_id=' + this.video_id + '&task_id=' + this.task_id)
@@ -206,6 +274,37 @@ export default {
       //   console.log(response)
       //   this.$router.push('/video/step2?video_id=' + this.video_id + '&task_id=' + this.task_id)
       // })
+    },
+    addPart() {
+      this.part.push({
+        id: (new Date()).getTime(),
+        name: '',
+        start_frame_index: '',
+        end_frame_index: '',
+        start_time: 0,
+        end_time: 0,
+        checked: false
+      })
+      this.taskInfo.data[0].part = this.part
+    },
+    deletePart() {
+      this.part = this.part.filter((item) => {
+        return !item.checked
+      })
+      this.taskInfo.data[0].part = this.part
+    },
+    mergePart() {
+      const mergePart = _.filter(this.part, (item) => {
+        return item.checked
+      })
+      mergePart[0].end_frame_index = mergePart[1].end_frame_index
+      console.log(mergePart)
+      this.part = this.part.filter((item) => {
+        return item.id !== mergePart[1].id
+      })
+      this.taskInfo.data[0].part = this.part
+    },
+    checkedChange() {
     }
   }
 }
@@ -246,6 +345,9 @@ export default {
   .el-button{
     width: 100%;
   }
+}
+.el-input.is-disabled .el-input__inner{
+  color: #606266;
 }
 </style>
 
