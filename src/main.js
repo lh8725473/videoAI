@@ -37,6 +37,7 @@ Vue.use(ElementUI, { locale })
 Vue.config.productionTip = false
 
 // Vue.prototype.$socket = socket('ws://192.168.100.210:5005/video_template')
+// Vue.prototype.$socket = socket('ws://192.168.100.178:5700/video_template')
 Vue.prototype.$socket = socket('ws://192.168.100.212:5700/video_template')
 
 new Vue({

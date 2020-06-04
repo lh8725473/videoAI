@@ -56,11 +56,19 @@ export function getKeyPeople(params) {
   })
 }
 
-export function getKeyFrames(data) {
+export function keyFrames(data) {
   return request({
     url: '/video/key_frames',
     method: 'post',
     data
+  })
+}
+
+export function getKeyFrames(params) {
+  return request({
+    url: '/keyframe/get_key_frame',
+    method: 'get',
+    params
   })
 }
 
@@ -107,6 +115,14 @@ export function updatePeople(data) {
 export function savePreClassify(data) {
   return request({
     url: '/task/save_pre_classify',
+    method: 'post',
+    data
+  })
+}
+
+export function keyframeSave(data) {
+  return request({
+    url: '/keyframe/save',
     method: 'post',
     data
   })

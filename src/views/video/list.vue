@@ -133,7 +133,7 @@ export default {
       }).then(response => {
         console.log(response)
         if (response.code === 0) {
-          this.$router.push('/video/step2?video_id=' + video.id)
+          this.$router.push('/video/step1?video_id=' + video.id)
         }
       })
     },

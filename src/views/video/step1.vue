@@ -1,125 +1,112 @@
 <template>
   <div class="app-container">
     <el-row>
-      <el-col :span="12">
-        <video ref="video" width="100%" height="480" :src="baseAPI + videoInfo.path" controls="controls">
-          your browser does not support the video tag
-        </video>
+      <el-col ref="canvasDiv" :span="16">
+        <canvas id="video" :width="canvasWidth" height="480" />
       </el-col>
-      <el-col v-show="taskInfo.status === '2'" :offset="1" :span="11">
-        <el-button v-show="!isEdit" size="small" type="primary" style="position:absolute;right: 0;top: 2px; z-index: 2;" @click="isEdit = true">编 辑</el-button>
-        <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 0px;top: 2px; z-index: 2;" @click="savePart()">完 成</el-button>
-        <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 66px;top: 2px; z-index: 2;" :disabled="btnsDis.delete" @click="deletePart()">删 除</el-button>
-        <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 132px;top: 2px; z-index: 2;" :disabled="btnsDis.merge" @click="mergePart()">合 并</el-button>
-        <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 198px;top: 2px; z-index: 2;" @click="addPart()">增 加</el-button>
+      <el-col :offset="1" :span="6">
         <el-tabs v-model="activePeople" type="card" @tab-click="handleClick">
-          <el-tab-pane v-for="(item, index) in result" :key="index" :label="item.people_number + ''" :name="item.people_number + ''" />
+          <el-tab-pane v-for="(item, index) in result" :key="index" :label="item.reid + ''" :name="item.reid + ''" />
         </el-tabs>
         <el-row>
-          <el-col :span="6">动作名</el-col>
-          <el-col :offset="1" :span="4">开始帧</el-col>
-          <el-col :offset="1" :span="4">结束帧</el-col>
-          <el-col :offset="1" :span="5">时间段(秒)</el-col>
-        </el-row>
-        <el-row v-for="(item, index) in part" :key="index">
-          <el-col v-show="isEdit" :span="6">
-            <el-col :span="4" style="line-height: 28px;">
-              <el-checkbox v-model="item.checked" @change="checkedChange" />
-            </el-col>
-            <el-col :span="20">
-              <el-input v-model="item.name" size="mini" />
-            </el-col>
+          <el-col :span="10">
+            reid:
           </el-col>
-          <el-col v-show="!isEdit" :span="6">
-            <el-input v-model="item.name" size="mini"  disabled/>
+          <el-col :offset="1" :span="10">
+            {{part.reid}}
           </el-col>
-          <el-col :offset="1" :span="4">
-            <el-input v-model="item.start_frame_index" size="mini" :disabled="!isEdit"/>
-          </el-col>
-          <el-col :offset="1" :span="4">
-            <el-input v-model="item.end_frame_index" size="mini" :disabled="!isEdit"/>
-          </el-col>
-          <el-col :offset="1" :span="5" style="line-height: 28px;">
-            {{ item.start_time | timeFilter(item, fps) }}
-          </el-col>
-          <el-col :offset="1" :span="1">
-            <i class="el-icon-video-play" @click="playVideo(item)" />
+          <el-col :offset="1" :span="2">
+            <i class="el-icon-video-play" @click="playVideo()" />
           </el-col>
         </el-row>
+        <el-row>
+          <el-col :span="8" style="line-height: 36px;">
+            动作名称:
+          </el-col>
+          <el-col :offset="1" :span="12">
+            <el-input v-model="part.action_name" size="medium" />
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8" style="line-height: 36px;">
+            重要人物:
+          </el-col>
+          <el-col :offset="1" :span="12" style="line-height: 36px;">
+            <el-radio-group v-model="part.status">
+              <el-radio :label="'0'">是</el-radio>
+              <el-radio :label="'1'">否</el-radio>
+            </el-radio-group>
+          </el-col>
+        </el-row>
+        <!-- <el-row class="action-buttons">
+          <el-col :span="10"><el-button size="small" type="warning" @click="savePart()" disabled>保存片段</el-button></el-col>
+          <el-col :offset="1" :span="10"><el-button size="small" type="primary" @click="keyPeople()">下一步</el-button></el-col>
+        </el-row> -->
         <el-image
           style="width: 200px; height: 200px"
           :src="url"
-          fit="contain"
-        />
-        <el-row class="action-buttons">
-          <el-col :span="10"><el-button size="small" type="primary" @click="keyPeople()">下一步</el-button></el-col>
+          fit="contain"></el-image>
+        <el-row>
+          <el-col :span="12">
+            <el-button size="medium" type="warning" @click="updatePeople()">保    存</el-button>
+          </el-col>
         </el-row>
       </el-col>
-      <el-col v-show="taskInfo.status === '1'" :offset="1" :span="6">
-        <div class="loading-div">
-          <i class="el-icon-loading" />
-          <div>结果分析中...</div>
-        </div>
-      </el-col>
-      <el-col v-show="taskInfo.status === '-100'" :offset="1" :span="6">
-        <div class="warning-div">
-          <i class="el-icon-warning-outline" />
-          <div>分析失败</div>
-        </div>
-      </el-col>
     </el-row>
-
-    <el-row>
-      视频历史预分类
-    </el-row>
-    <el-table
-      :data="preClassifyList"
-      border
-      fit
-      highlight-current-row
-    >
-      <el-table-column label="动作名">
-        <template slot-scope="scope">
-          {{ scope.row.name }}
-        </template>
-      </el-table-column>
-      <el-table-column label="开始/结束帧" width="100">
-        <template slot-scope="scope">
-          {{ scope.row.start_frame_index }} 至 {{ scope.row.end_frame_index }}
-        </template>
-      </el-table-column>
-      <el-table-column label="开始/结束帧" width="100">
-        <template slot-scope="scope">
-          {{ scope.row.start_frame_index }} 至 {{ scope.row.end_frame_index }}
-        </template>
-      </el-table-column>
-      <el-table-column label="人物REID" width="100">
-        <template slot-scope="scope">
-          {{ scope.row.reid }}
-        </template>
-      </el-table-column>
-      <el-table-column label="创建时间" width="180">
-        <template slot-scope="scope">
-          {{ scope.row.create_time }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作类型" width="110">
-        <template slot-scope="scope">
-          {{ scope.row.operation_type | operationTypeFilter }}
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="110" align="center">
-        <template slot-scope="scope">
-          <span>{{ scope.row.status | statusFilter }}</span>
-        </template>
-      </el-table-column>
-    </el-table>
+    <!-- <div v-for="people in peoples" :key="people.reid">
+      <div>人物ID:{{ people.reid }}</div>
+      <div v-for="part in people.parts" :key="part.fragment">
+        <div>片段: {{ part.fragment }}</div>
+        <div v-for="img in part.imgs" :key="img.frame_index">{{ img.frame_index }}</div>
+      </div>
+    </div> -->
+    <el-form :inline="true" :model="formInline" class="demo-form-inline" size="small">
+      <el-form-item label="当前帧:">
+        <el-input v-model="formInline.curFrameIndex" placeholder="当前帧" />
+      </el-form-item>
+      <el-form-item label="帧距:">
+        <el-select v-model="formInline.step" placeholder="帧距">
+          <el-option label="1" value="1" />
+          <el-option label="2" value="2" />
+          <el-option label="5" value="5" />
+          <el-option label="10" value="10" />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button size="small" type="warning" @click="preFrameIndex()">上一帧</el-button>
+        <el-button size="small" type="warning" @click="nextFrameIndex()">下一帧</el-button>
+        <el-button type="primary" @click="goFrameIndex()">跳转当前帧</el-button>
+        <el-button type="primary" @click="preClassify()">下一步</el-button>
+      </el-form-item>
+    </el-form>
+    <!-- <canvas id="canvas" width="300" height="300" /> -->
   </div>
 </template>
 
 <script>
-import { getPreClassify, getPreClassifyList, getVideoInfo, keyPeople, savePreClassify } from '@/api/video'
+import { getKeyPeople, getPeoples, updatePeople, preClassify } from '@/api/video'
+import { fabric } from 'fabric'
 import _ from 'lodash'
+// const { fabric } = require('fabric')
+
+function ImagePool(size) {
+  this.size = size
+  this.images = []
+  this.counter = 0
+}
+
+ImagePool.prototype.next = function() {
+  if (this.images.length < this.size) {
+    var image = new Image()
+    this.images.push(image)
+    return image
+  } else {
+    if (this.counter >= this.size) {
+      this.counter = 0
+    }
+    return this.images[this.counter++ % this.size]
+  }
+}
 
 export default {
   filters: {
@@ -138,173 +125,241 @@ export default {
         '1': '人工修正'
       }
       return operationText[fun]
-    },
-    timeFilter(start_time, item, fps) {
-      const srartString = item.start_frame_index === 1 ? 0 : (item.start_frame_index / fps).toFixed(2)
-      return srartString + '至' + (item.end_frame_index / fps).toFixed(2)
     }
   },
   data() {
     return {
       baseAPI: process.env.VUE_APP_BASE_API,
-      isEdit: false,
-      form: {
-
-      },
+      canvasWidth: 300,
+      peoples: [],
       result: [],
       part: [],
       activePeople: '',
       taskInfo: {},
-      nbFrames: 0,
-      fps: 0,
       videoInfo: {},
-      preClassifyList: [],
       url: '',
-      btnsDis: {
-        delete: false,
-        merge: false
+      preClassifyList: [],
+      formInline: {
+        curFrameIndex: 1,
+        step: 1
       }
     }
   },
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
-    this.getPreClassify()
-    this.getPreClassifyList()
-    this.getVideoInfo()
-    this.$socket.on('pre_classfily_response', (data) => {
-      if (data.data.task_id === this.task_id) {
-        this.result = data.data.data
-        if (this.result.length > 0) {
-          this.activePeople = this.result[0].people_number + ''
-          this.part = this.result[0].part
-          _.forEach(this.part, (item) => {
-            this.$set(item, 'checked', false)
-          })
-          this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_img
-        }
-
-        this.taskInfo = data.data
-        this.nbFrames = this.taskInfo.nb_frames
-        this.fps = this.taskInfo.fps
+    this.getPeoples()
+    // this.$socket.on('key_people_response', (data) => {
+    //   console.log(data)
+    //   const people = _.find(this.peoples, { 'reid': data.data.reid })
+    //   if (people) {
+    //     const fragment = _.find(people.parts, { 'fragment': data.data.part.toString() })
+    //     if (fragment) {
+    //       fragment.imgs.push({
+    //         frame_index: data.data.frame_index,
+    //         url: data.data.image,
+    //         rect: data.data.pose_result.bbox
+    //       })
+    //     } else {
+    //       people.parts.push({
+    //         fragment: data.data.part.toString(),
+    //         imgs: [{
+    //           frame_index: data.data.frame_index,
+    //           url: data.data.image,
+    //           rect: data.data.pose_result.bbox
+    //         }]
+    //       })
+    //     }
+    //   } else {
+    //     this.peoples.push({
+    //       reid: data.data.reid,
+    //       parts: []
+    //     })
+    //     const people = _.find(this.peoples, { 'reid': data.data.reid })
+    //     people.parts.push({
+    //       fragment: data.data.part.toString(),
+    //       imgs: [{
+    //         frame_index: data.data.frame_index,
+    //         url: data.data.image,
+    //         rect: data.data.pose_result.bbox
+    //       }]
+    //     })
+    //   }
+    // })
+  },
+  mounted() {
+    // 设置canvasWidth
+    console.log(this.$refs.canvasDiv.$el.clientWidth)
+    this.canvasWidth = this.$refs.canvasDiv.$el.clientWidth
+    this.imgPoolMap = new ImagePool(10)
+    var canvasBox = document.getElementById('video').getContext('2d')
+    this.$socket.on('key_people_response', (res) => {
+      if (res.code === 0) {
+        this.formInline.curFrameIndex = res.data.frame_index
+        console.log(res.data.frame_index)
+        this.renderVideo(canvasBox, res.data)
+      } else {
+        this.$message.error(res.message)
       }
     })
+    this.$socket.on('key_people_list', (res) => {
+      if (res.code === 0) {
+        this.result = res.data
+        this.activePeople = this.result[0].reid + ''
+        this.part = this.result[0]
+        this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
+      } else {
+        this.$message.error(res.message)
+      }
+    })
+    // var canvas = new fabric.Canvas('canvas')
+
+    // var rect = new fabric.Rect({
+    //   top: 100,
+    //   left: 100,
+    //   width: 60,
+    //   height: 70,
+    //   strokeWidth: 2,
+    //   stroke: '#880E4F',
+    //   fill: 'rgba(255,0,0,0)',
+    //   hasControls: false,
+    //   // evented: false
+    //   lockMovementX: true,
+    //   lockMovementY: true
+    // })
+
+    // console.log(rect)
+    // function objMousedown(a) {
+    //   console.log(a)
+    // }
+
+    // canvas.add(rect)
+    // // setTimeout(() => {
+    // //   canvas.remove(rect)
+    // // }, 5000)
+    // rect.on({
+    //   'mousedown': objMousedown
+    // })
+
+    // var mouseDownPoint = {}
+
+    // function mouseDown(e) {
+    //   console.log(e)
+    //   mouseDownPoint = e.pointer
+    // }
+    // function mouseUp(e) {
+    //   console.log(e)
+    //   var tempRect = new fabric.Rect({
+    //     top: mouseDownPoint.y,
+    //     left: mouseDownPoint.x,
+    //     width: e.pointer.x - mouseDownPoint.x,
+    //     height: e.pointer.y - mouseDownPoint.y,
+    //     strokeWidth: 2,
+    //     stroke: '#880E4F',
+    //     fill: 'rgba(255,0,0,0)'
+    //   })
+    //   console.log(tempRect)
+    //   canvas.add(tempRect)
+    // }
+    // setInterval(() => {
+    //   console.log(canvas.getActiveObject())
+    // }, 5000)
+    // // canvas.on({
+    // //   'mouse:down': mouseDown,
+    // //   'mouse:up': mouseUp
+    // // })
   },
   methods: {
-    getVideoInfo() {
-      getVideoInfo({
+    renderVideo(ctx, data) {
+      console.info(data)
+      const blob = new Blob([data.image], { type: 'image/jpeg' })
+      let url = window.URL.createObjectURL(blob)
+
+      let img = this.imgPoolMap.next()
+      img.src = url
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, img.width, img.height)
+        img.onload = img.onerror = null
+        img.src = ''
+        img = null
+        URL.revokeObjectURL(url)
+      }
+      img.onerror = (err) => {
+        console.log(err)
+        img.onload = img.onerror = null
+        img = null
+        URL.revokeObjectURL(url)
+        url = null
+      }
+    },
+    getPeoples() {
+      getPeoples({
         video_id: this.video_id
       }).then(response => {
-        this.videoInfo = response.data
-      })
-    },
-    getPreClassify() {
-      getPreClassify({
-        video_id: this.video_id,
-        task_id: this.task_id
-      }).then(response => {
-        this.result = response.data.data
-        if (this.result.length > 0) {
-          this.activePeople = this.result[0].people_number + ''
-          this.part = this.result[0].part
-          _.forEach(this.part, (item) => {
-            this.$set(item, 'checked', false)
-          })
-          this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_img
-        }
-
-        this.taskInfo = response.data
-        this.nbFrames = this.taskInfo.nb_frames
-        this.fps = this.taskInfo.fps
-      })
-    },
-    getPreClassifyList() {
-      getPreClassifyList({
-        video_id: this.video_id,
-        page: 1,
-        per_page: 10
-      }).then(response => {
-        this.preClassifyList = response.data
-      })
-    },
-    playVideo(item) {
-      const videoDom = this.$refs.video
-      const start = (item.start_frame_index / this.fps)
-      const end = (item.end_frame_index / this.fps)
-      var fun = function() {
-        if (videoDom.currentTime >= end) {
-          videoDom.pause()
-          videoDom.removeEventListener('timeupdate', fun)
-        }
-      }
-      videoDom.currentTime = start
-      videoDom.addEventListener('timeupdate', fun)
-      videoDom.play()
-    },
-    onSubmit() {
-      this.$message('submit!')
-    },
-    onCancel() {
-      this.$message({
-        message: 'cancel!',
-        type: 'warning'
+        this.result = response.data
+        this.activePeople = this.result[0].reid + ''
+        this.part = this.result[0]
+        this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
+        // this.taskInfo = response.data
       })
     },
     handleClick(tab) {
-      this.part = this.result[tab.index].part
-      _.forEach(this.part, (item) => {
-        this.$set(item, 'checked', false)
-      })
-      this.url = process.env.VUE_APP_BASE_API + this.result[tab.index].reid_img
+      this.activePeople = this.result[tab.index].reid + ''
+      this.part = this.result[tab.index]
+      this.url = process.env.VUE_APP_BASE_API + this.result[tab.index].reid_path
     },
-    savePart() {
-      savePreClassify(this.taskInfo).then(response => {
-        if (response.code === 0) {
-          this.$message('保存成功')
-          this.isEdit = false
-        }
+    playVideo() {
+      this.$socket.emit('play', {
+        'step': parseInt(this.formInline.step),
+        'video_id': this.video_id,
+        'reid': this.activePeople
+      })
+    },
+    preFrameIndex() {
+      this.formInline.curFrameIndex = parseInt(this.formInline.curFrameIndex) - parseInt(this.formInline.step)
+      this.$socket.emit('show_frame', {
+        'task_id': this.task_id,
+        'video_id': this.video_id,
+        'reid': this.activePeople,
+        'frame_index': parseInt(this.formInline.curFrameIndex)
+      })
+    },
+    nextFrameIndex() {
+      this.formInline.curFrameIndex = parseInt(this.formInline.curFrameIndex) + parseInt(this.formInline.step)
+      this.$socket.emit('show_frame', {
+        'task_id': this.task_id,
+        'video_id': this.video_id,
+        'reid': this.activePeople,
+        'frame_index': parseInt(this.formInline.curFrameIndex)
+      })
+    },
+    goFrameIndex() {
+      this.$socket.emit('show_frame', {
+        'task_id': this.task_id,
+        'video_id': this.video_id,
+        'reid': this.activePeople,
+        'frame_index': parseInt(this.formInline.curFrameIndex)
       })
     },
     keyPeople() {
       this.$router.push('/video/step3?video_id=' + this.video_id + '&task_id=' + this.task_id)
-      // keyPeople({
-      //   task_id: this.task_id,
-      //   video_id: this.video_id
-      // }).then(response => {
-      //   console.log(response)
-      //   this.$router.push('/video/step2?video_id=' + this.video_id + '&task_id=' + this.task_id)
-      // })
     },
-    addPart() {
-      this.part.push({
-        id: (new Date()).getTime(),
-        name: '',
-        start_frame_index: '',
-        end_frame_index: '',
-        start_time: 0,
-        end_time: 0,
-        checked: false
+    updatePeople() {
+      updatePeople(this.part).then(response => {
+        if (response.code === 0) {
+          this.$message('保存关键人物成功！')
+        }
       })
-      this.taskInfo.data[0].part = this.part
     },
-    deletePart() {
-      this.part = this.part.filter((item) => {
-        return !item.checked
+    preClassify() {
+      preClassify({
+        video_id: this.video_id
+      }).then(response => {
+        console.log(response)
+        if (response.code === 0) {
+          this.$router.push('/video/step2?video_id=' + this.video_id + '&task_id=' + response.data.task_id)
+        }
       })
-      this.taskInfo.data[0].part = this.part
-    },
-    mergePart() {
-      const mergePart = _.filter(this.part, (item) => {
-        return item.checked
-      })
-      mergePart[0].end_frame_index = mergePart[1].end_frame_index
-      console.log(mergePart)
-      this.part = this.part.filter((item) => {
-        return item.id !== mergePart[1].id
-      })
-      this.taskInfo.data[0].part = this.part
-    },
-    checkedChange() {
     }
   }
 }
@@ -347,7 +402,7 @@ export default {
   }
 }
 .el-input.is-disabled .el-input__inner{
-  color: #606266;
+  color: #303133;
 }
 </style>
 
