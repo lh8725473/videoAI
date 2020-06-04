@@ -1,52 +1,24 @@
 <template>
   <div class="app-container">
-    <el-button size="medium" type="primary" style="position:absolute;right: 120px;top: 20px; z-index: 2;" @click="keyframeSave()">保存关键帧</el-button>
-    <el-button size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="nextStep()">下一步</el-button>
     <el-tabs v-model="activePeoplePeopleNumber" type="card" @tab-click="peopleChange">
       <el-tab-pane v-for="people in peoples" :key="people.reid + ''" :label="'人物ID:' + people.reid" :name="people.reid + ''" />
     </el-tabs>
     <el-collapse v-model="activePart" @change="partChange">
-      <el-collapse-item v-for="part in parts" :key="part.id" :name="part.id">
+      <el-collapse-item v-for="part in parts" :key="part.id" :title="part.name + '(共' + part.key_frame.length + '张)'" :name="part.id">
         <template slot="title">
-          {{ part.name }} (已经选取关键帧，共{{ part.key_frame.length }}张)
+          {{ part.name }} (共{{ part.key_frame.length }}张)
+          <el-button type="primary" size="mini" style="margin-left: 20px" @click.stop="saveDom(part)">保存片段</el-button>
         </template>
-        <div class="key_frame">
-          <draggable
-            v-model="part.key_frame"
-            :group="{ name: 'people'}"
-            ghost-class="ghost"
-          >
-            <div v-for="(img, index) in part.key_frame" :key="img.frame_index" class="block">
-              <i class="el-icon-circle-close" @click="deleteImg(part.key_frame, index)" />
-              <el-image
-                style="width: 200px; height: 200px"
-                :src="img.frame_path"
-                fit="contain"
-                @click="previewFrame(img, part)"
-              />
-              <span class="demonstration">帧号：{{ img.frame_index }}</span>
-            </div>
-          </draggable>
-        </div>
-
-        <div class="previewParts">
-          <el-row v-show="part.previewParts.length > 0">
-            关键帧附近帧
-          </el-row>
-          <draggable
-            v-model="part.previewParts"
-            :group="{ name: 'people', put: false }"
-            ghost-class="ghost"
-          >
-            <div v-for="img in part.previewParts" :key="img.frame_index" class="block">
-              <el-image
-                style="width: 200px; height: 200px"
-                :src="img.frame_path"
-                fit="contain"
-              />
-              <span class="demonstration">帧号：{{ img.frame_index }}</span>
-            </div>
-          </draggable>
+        <div id="partimgs">
+          <div v-for="img in part.key_frame" :key="img.frame_index" class="block">
+            <el-image
+              style="width: 200px; height: 200px"
+              :src="baseAPI + img.frame_path"
+              fit="contain"
+              @click="addImg(img, part)"
+            />
+            <span class="demonstration">帧号：{{ img.frame_index }}</span>
+          </div>
         </div>
 
         <!-- <el-tabs v-model="part.activeImg">
@@ -167,16 +139,12 @@
 
 <script>
 import { Sortable, Swap } from 'sortablejs/modular/sortable.core.esm'
-import { getKeyFrames, getImageFeature, createTemplate, keyframeSave } from '@/api/video'
-import { fabric } from 'fabric'
-import draggable from 'vuedraggable'
+import { getKeyFrames, getImageFeature, createTemplate, getTemplate } from '@/api/video'
+// import { fabric } from 'fabric'
 import _ from 'lodash'
 // const { fabric } = require('fabric')
 
 export default {
-  components: {
-    draggable
-  },
   filters: {
 
   },
@@ -188,7 +156,7 @@ export default {
       peoples: [],
       parts: [],
       result: [],
-      cruPartId: '',
+      part: [],
       activePeople: {},
       activePeoplePeopleNumber: '',
       taskInfo: {},
@@ -205,23 +173,19 @@ export default {
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
-    console.log(this.peoples)
-    this.getKeyFrames()
-    let people = {}
-    let part = {}
-    this.peoples = []
+    this.getTemplate()
     this.$socket.on('key_frame_response', (res) => {
-      people = _.find(this.peoples, { reid: res.data.reid })
-      part = _.find(people.data, { id: res.data.id })
-      part.key_frame = res.data.key_frame
+      const people = _.find(this.peoples, { people_number: res.data.reid })
+      console.log(people)
+      const part = _.find(people.parts, { partFrames: res.data.part.toString() })
+      _.forEach(res.data.key_frmae, (img) => {
+        part.imgs.push(img)
+        // this.$set(part.imgs, part.imgs.length + 1, img)
+      })
+      // part.imgs = _.concat(part.imgs, res.data.key_frmae)
     })
   },
   mounted() {
-    this.$socket.on('preview_key_frame', (data) => {
-      const part = _.find(this.parts, { id: this.cruPartId })
-      console.log(part)
-      part.previewParts.push(data.data)
-    })
     // this.$socket.on('key_frame_response', (res) => {
     //   console.log(res)
     //   if (res.code === 0) {
@@ -231,46 +195,25 @@ export default {
     //   }
     // })
   },
-  beforeDestroy() {
-    this.$socket.removeListener('key_frame_response')
-    this.$socket.removeListener('preview_key_frame')
-  },
   methods: {
-    getKeyFrames() {
-      getKeyFrames({
+    getTemplate() {
+      getTemplate({
         video_id: this.video_id,
         task_id: this.task_id
       }).then(response => {
         _.forEach(response.data.peoples, (people) => {
-          _.forEach(people.data, (partInfo) => {
-            partInfo.previewParts = []
+          _.forEach(people.data, (part) => {
+            part.templateDetail = []
+            _.forEach(part.key_frame, (frame) => {
+              part.templateDetail.push(frame.template)
+            })
           })
         })
         this.peoples = response.data.peoples
         this.activePeople = this.peoples[0]
         this.activePeoplePeopleNumber = this.peoples[0].reid + ''
-        // _.forEach(this.peoples, (people) => {
-        //   _.forEach(people.data, (partInfo) => {
-        //     this.$set(partInfo, 'previewParts', [])
-        //   })
-        // })
         this.parts = this.peoples[0].data
-        console.log(this.peoples)
       })
-    },
-    deleteImg(part, index) {
-      part.splice(index, 1)
-    },
-    previewFrame(img, part) {
-      console.log(img.frame_index)
-      this.$socket.emit('preview_frame', {
-        start_frame_index: img.frame_index - 10,
-        end_frame_index: img.frame_index + 10,
-        video_id: this.video_id
-      })
-      this.cruPartId = part.id
-      const cruPart = _.find(this.parts, { id: this.cruPartId })
-      cruPart.previewParts = []
     },
     peopleChange(tab) {
       this.activePeople = this.peoples[tab.index]
@@ -280,6 +223,8 @@ export default {
       console.log(part)
     },
     addImg(img, part) {
+      console.log(img)
+
       getImageFeature({
         video_id: this.video_id,
         task_id: this.task_id,
@@ -300,7 +245,7 @@ export default {
         const postPart = _.clone(part)
         postPart.templateName = value
         postPart.partFrames = postPart.partFrames.split(',')
-        postPart.reId = this.activePeoplePeopleNumber + ''
+        postPart.reId = this.activePeoplePeopleNumber
         createTemplate({
           task_id: this.task_id,
           video_id: this.video_id,
@@ -313,27 +258,6 @@ export default {
         })
       }).catch(() => {
 
-      })
-    },
-    keyframeSave() {
-      keyframeSave({
-        task_id: this.task_id,
-        video_id: this.video_id,
-        peoples: this.peoples
-      }).then(response => {
-        if (response.code === 0) {
-          this.$message('保存关键帧成功')
-        }
-      })
-    },
-    nextStep() {
-      createTemplate({
-        task_id: this.task_id,
-        video_id: this.video_id
-      }).then(response => {
-        if (response.code === 0) {
-          this.$message('模板生成成功')
-        }
       })
     }
   }
@@ -376,36 +300,15 @@ export default {
     width: 100%;
   }
 }
-#partimgs{
-  padding-top: 10px;
-}
 .block{
-  position: relative;
   text-align: center;
   display: inline-block;
   width: 200px;
   box-sizing: border-box;
   margin-right: 10px;
-  .el-icon-circle-close{
-    position: absolute;
-    right: -12px;
-    font-size: 25px;
-    top: -10px;
-    z-index: 2;
-    cursor: pointer;
-  }
-  .el-image{
-    background-color: #f2f6fc;
-  }
 }
 .el-image{
   cursor: pointer;
-}
-.el-collapse-item__content{
-  padding-top: 25px;
-}
-.key_frame{
-  padding-top: 10px;
 }
 </style>
 

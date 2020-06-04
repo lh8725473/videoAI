@@ -109,7 +109,7 @@ export const constantRoutes = [
       {
         path: 'step4',
         name: 'step4',
-        component: () => import('@/views/video/step3'),
+        component: () => import('@/views/video/step4'),
         meta: { title: '模板提取', icon: 'form' }
       }
     ]

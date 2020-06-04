@@ -88,6 +88,14 @@ export function createTemplate(data) {
   })
 }
 
+export function getTemplate(params) {
+  return request({
+    url: '/template/get_template',
+    method: 'get',
+    params
+  })
+}
+
 export function postKeyPeople(data) {
   return request({
     url: '/keypeople/key_people',
