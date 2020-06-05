@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-collapse v-model="activePart">
+    <el-collapse v-model="activePart" accordion>
       <el-collapse-item v-for="part in parts" :key="part.partFrames" :name="part.partFrames">
         <template slot="title">
           <span class="tip">动作: {{ part.template_name }}</span>
@@ -15,20 +15,21 @@
                 style="width: 200px; height: 200px"
                 :src="baseAPI + img.frame_path"
                 fit="contain"
-                @click="addImg(img, part)"
               />
               <span class="demonstration">帧号：{{ img.frame_id }}</span>
             </div>
-            <p>匹配</p>
-            <div v-for="img in part.match_frame_list" :key="img.frame_id" class="block">
-              <el-image
-                style="width: 200px; height: 200px"
-                :src="baseAPI + img.frame_path"
-                fit="contain"
-                @click="addImg(img, part)"
-              />
-              <span class="demonstration">帧号：{{ img.frame_id }}</span>
-            </div>
+            <template v-for="(match_frame, index) in part.match_frame_list">
+              <p>匹配{{ index + 1 }}</p>
+              <div v-for="(img, index) in match_frame" :key="index" class="block">
+                <el-image
+                  style="width: 200px; height: 200px"
+                  :src="baseAPI + img.frame_path"
+                  fit="contain"
+                />
+                <span class="demonstration">帧号：{{ img.frame_id }}</span>
+              </div>
+            </template>
+
           </div>
         </el-row>
       </el-collapse-item>
@@ -62,6 +63,7 @@ export default {
   },
   created() {
     this.$socket.on('template_match', resp => {
+      console.log(resp)
       if (resp.code === 0) {
         setParts(resp.data)
       }
@@ -138,7 +140,6 @@ export default {
   }
 }
 .scroll-warp{
-  height: 500px;
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;

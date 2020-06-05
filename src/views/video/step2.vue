@@ -8,6 +8,7 @@
       </el-col>
       <el-col v-show="taskInfo.status === '2'" :offset="1" :span="11">
         <el-button v-show="!isEdit" size="small" type="primary" style="position:absolute;right: 0;top: 2px; z-index: 2;" @click="isEdit = true">编 辑</el-button>
+        <el-button v-show="!isEdit" size="small" type="primary" style="position:absolute;right: 66px;top: 2px; z-index: 2;" @click="getPreClassify()">重 置</el-button>
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 0px;top: 2px; z-index: 2;" @click="savePart()">完 成</el-button>
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 66px;top: 2px; z-index: 2;" :disabled="btnsDis.delete" @click="deletePart()">删 除</el-button>
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 132px;top: 2px; z-index: 2;" :disabled="btnsDis.merge" @click="mergePart()">合 并</el-button>

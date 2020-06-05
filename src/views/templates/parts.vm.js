@@ -2,7 +2,6 @@
 const baseParts = [
   {
     'match_frame_list': [
-
     ],
     'status': null,
     'template_frame_list': [

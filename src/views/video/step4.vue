@@ -1,5 +1,7 @@
 <template>
   <div class="app-container">
+    <el-button size="medium" type="primary" style="position:absolute;right: 130px;top: 20px; z-index: 2;" @click="saveTemplate()">保存模板</el-button>
+    <el-button size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="pigeonhole()">归档模板</el-button>
     <el-tabs v-model="activePeoplePeopleNumber" type="card" @tab-click="peopleChange">
       <el-tab-pane v-for="people in peoples" :key="people.reid + ''" :label="'人物ID:' + people.reid" :name="people.reid + ''" />
     </el-tabs>
@@ -7,7 +9,6 @@
       <el-collapse-item v-for="part in parts" :key="part.id" :title="part.name + '(共' + part.key_frame.length + '张)'" :name="part.id">
         <template slot="title">
           {{ part.name }} (共{{ part.key_frame.length }}张)
-          <el-button type="primary" size="mini" style="margin-left: 20px" @click.stop="saveDom(part)">保存片段</el-button>
         </template>
         <div id="partimgs">
           <div v-for="img in part.key_frame" :key="img.frame_index" class="block">
@@ -21,108 +22,112 @@
           </div>
         </div>
 
-        <!-- <el-tabs v-model="part.activeImg">
-          <el-tab-pane v-for="imgDetail in part.imgDetails" :key="imgDetail.frame_index" :label="'人物关键帧:' + imgDetail.frame_index" :name="imgDetail.frame_index">
+        <el-tabs v-model="part.activeImg">
+          <el-tab-pane v-for="imgDetail in part.templateDetail" v-if="imgDetail.frame_index" :key="imgDetail.frame_index" :label="'人物关键帧:' + imgDetail.frame_index" :name="imgDetail.frame_index + ''">
             <el-row>
               <el-col :span="12">
                 <el-image
                   style="width: 100%; height: 300px"
-                  :src="baseAPI + imgDetail.frame_path"
+                  :src="imgDetail.full_frame_path"
                   fit="contain"
-                  @click="addImg(imgDetail, part)"
                 />
               </el-col>
-              <el-col :span="12">
+              <el-col v-if="imgDetail.features" :span="12">
                 <el-tabs v-model="stringdsad" type="card">
-                  <el-tab-pane label="人物重心" name="人物重心">
-                    人物重心坐标：{{ imgDetail.gravity_center }}
-                  </el-tab-pane>
+                  <!-- <el-tab-pane label="人物重心" name="人物重心">
+                    人物重心坐标：{{ imgDetail.features.gravity_center }}
+                  </el-tab-pane> -->
                   <el-tab-pane label="人物关节点/距离" name="人物关节点/距离">
                     <el-row>
-                      <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">距离(px)</el-col>
-                      <el-col :offset="1" :span="5">阈值(±0.5)
+                      <el-col :span="8">描述</el-col>
+                      <el-col :offset="1" :span="4">距离(px)</el-col>
+                      <el-col :offset="1" :span="4">阈值(±0.5)
                         <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
-                      <el-col :offset="1" :span="5">权重(0-1)
+                      <el-col :offset="1" :span="4">权重(0-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                     </el-row>
-                    <el-row v-for="(item, index) in imgDetail.inclination" :key="index">
-                      <el-col :span="5">
+                    <el-row v-for="(item, index) in imgDetail.features.inclination" :key="index">
+                      <el-col :span="8">
                         <el-input v-model="item.describe" size="mini" />
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.value" size="mini" />
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.threshold" size="mini" />
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.weight" size="mini" />
                       </el-col>
                     </el-row>
                   </el-tab-pane>
                   <el-tab-pane label="人物关节点/角度" name="人物关节点/角度">
                     <el-row>
-                      <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">角度(度数)</el-col>
-                      <el-col :offset="1" :span="5">阈值(±60°)
+                      <el-col :span="8">描述</el-col>
+                      <el-col :offset="1" :span="4">角度(度数)</el-col>
+                      <el-col :offset="1" :span="4">阈值(±60°)
                         <el-tooltip class="item" effect="dark" content="角度阈值±60°内可选" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
-                      <el-col :offset="1" :span="5">权重(0-1)
+                      <el-col :offset="1" :span="4">权重(0-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                     </el-row>
-                    <el-row v-for="(item, index) in imgDetail.vertical" :key="index">
-                      <el-col :span="5">
+                    <el-row v-for="(item, index) in imgDetail.features.vertical" :key="index">
+                      <el-col :span="8">
                         <el-input v-model="item.describe" size="mini" />
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.value" size="mini" />
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.threshold" size="mini" />
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.weight" size="mini" />
                       </el-col>
                     </el-row>
                   </el-tab-pane>
                   <el-tab-pane label="人与静止物体距离" name="人与静止物体距离">
                     <el-row>
-                      <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">距离(px)</el-col>
-                      <el-col :offset="1" :span="5">阈值(±0.5)
+                      <el-col :span="8">描述</el-col>
+                      <el-col :offset="1" :span="4">距离(px)</el-col>
+                      <el-col :offset="1" :span="4">阈值(±0.5)
                         <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
-                      <el-col :offset="1" :span="5">权重(0-1)
+                      <el-col :offset="1" :span="4">权重(0-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
                     </el-row>
-                    <el-row v-for="(item, index) in imgDetail.ob" :key="index">
-                      <el-col :span="5">
-                        <el-input v-model="item.describe" size="mini" />
+                    <el-row v-for="(item, index) in imgDetail.features.ob_list" :key="index">
+                      <el-col :span="8">
+                        <el-col :span="4" style="line-height: 28px;">
+                          <el-checkbox v-model="item.status" :true-label="1" :false-label="0" @change="checkedChange(imgDetail.features.ob_list, imgDetail.frame_path, imgDetail)" />
+                        </el-col>
+                        <el-col :span="20" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" :title="item.describe">
+                          <span :style="styleObject(item)">{{ item.describe }}</span>
+                        </el-col>
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.value" size="mini" />
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.threshold" size="mini" />
                       </el-col>
-                      <el-col :offset="1" :span="5">
+                      <el-col :offset="1" :span="4">
                         <el-input v-model="item.weight" size="mini" />
                       </el-col>
                     </el-row>
@@ -131,15 +136,34 @@
               </el-col>
             </el-row>
           </el-tab-pane>
-        </el-tabs> -->
+        </el-tabs>
       </el-collapse-item>
     </el-collapse>
+
+    <el-dialog title="模板归档" :visible.sync="pigeonholeVisible">
+      <el-form :model="actionForm" label-width="100px">
+        <el-form-item label="动作名称">
+          <el-select v-model="actionForm.action_id" placeholder="请选择动作名称">
+            <el-option
+              v-for="actions in actionsList"
+              :key="actions.id"
+              :label="actions.action_name"
+              :value="actions.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="pigeonholeVisible = false">取 消</el-button>
+        <el-button type="primary" @click="archive()">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { Sortable, Swap } from 'sortablejs/modular/sortable.core.esm'
-import { getKeyFrames, getImageFeature, createTemplate, getTemplate } from '@/api/video'
+import { getKeyFrames, getImageFeature, createTemplate, getTemplate, drawImage, templateSave, getActionsList, archive } from '@/api/video'
 // import { fabric } from 'fabric'
 import _ from 'lodash'
 // const { fabric } = require('fabric')
@@ -150,7 +174,7 @@ export default {
   },
   data() {
     return {
-      stringdsad: '人物重心',
+      stringdsad: '人物关节点/距离',
       baseAPI: process.env.VUE_APP_BASE_API,
       canvasWidth: 300,
       peoples: [],
@@ -167,33 +191,40 @@ export default {
         curFrameIndex: 1,
         step: 1
       },
-      activePart: []
+      activePart: [],
+      loading: null,
+      pigeonholeVisible: false,
+      actionsList: [],
+      actionForm: {
+        action_id: ''
+      }
     }
   },
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
-    this.getTemplate()
-    this.$socket.on('key_frame_response', (res) => {
-      const people = _.find(this.peoples, { people_number: res.data.reid })
-      console.log(people)
-      const part = _.find(people.parts, { partFrames: res.data.part.toString() })
-      _.forEach(res.data.key_frmae, (img) => {
-        part.imgs.push(img)
-        // this.$set(part.imgs, part.imgs.length + 1, img)
-      })
-      // part.imgs = _.concat(part.imgs, res.data.key_frmae)
+    this.loading = this.$loading({
+      fullscreen: true,
+      text: '模板生成中',
+      background: 'rgba(0, 0, 0, 0.7)'
     })
+    this.getTemplate()
   },
   mounted() {
-    // this.$socket.on('key_frame_response', (res) => {
-    //   console.log(res)
-    //   if (res.code === 0) {
-    //     console.log(res)
-    //   } else {
-    //     this.$message.error(res.message)
+    // this.$socket.on('frame_template', (res) => {
+    //   const part = _.find(this.parts, { id: res.data.part_id })
+    //   const frame = _.find(part.key_frame, { frame_index: res.data.frame_index })
+    //   if (frame.template) {
+    //     frame.template.features = res.data.features
     //   }
     // })
+    this.$socket.on('template_status', (res) => {
+      console.log('template_status')
+      console.log(res)
+      if (res.data.status) {
+        this.loading.close()
+      }
+    })
   },
   methods: {
     getTemplate() {
@@ -201,10 +232,19 @@ export default {
         video_id: this.video_id,
         task_id: this.task_id
       }).then(response => {
+        console.log(_.last(_.last(_.last(response.data.peoples).data).key_frame).template)
+        if (!_.isEmpty(_.last(_.last(_.last(response.data.peoples).data).key_frame).template)) {
+          console.log('close')
+          this.loading.close()
+        }
         _.forEach(response.data.peoples, (people) => {
           _.forEach(people.data, (part) => {
             part.templateDetail = []
             _.forEach(part.key_frame, (frame) => {
+              frame.template.part_id = part.id
+              frame.template.frame_index = frame.frame_index
+              frame.template.frame_path = frame.frame_path
+              frame.template.full_frame_path = process.env.VUE_APP_BASE_API + frame.frame_path
               part.templateDetail.push(frame.template)
             })
           })
@@ -237,27 +277,47 @@ export default {
         }
       })
     },
-    saveDom(part) {
-      this.$prompt('请输入模板名称', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-      }).then(({ value }) => {
-        const postPart = _.clone(part)
-        postPart.templateName = value
-        postPart.partFrames = postPart.partFrames.split(',')
-        postPart.reId = this.activePeoplePeopleNumber
-        createTemplate({
-          task_id: this.task_id,
-          video_id: this.video_id,
-          type: '1',
-          data: postPart
-        }).then(response => {
-          if (response.code === 0) {
-            this.$message('模板保存成功')
-          }
-        })
-      }).catch(() => {
-
+    checkedChange(object_location, frame_path, imgDetail) {
+      drawImage({
+        object_location: object_location,
+        frame_path: frame_path
+      }).then((response) => {
+        imgDetail.full_frame_path = response.data.frame
+      })
+    },
+    styleObject(item) {
+      return {
+        color: 'rgb(' + item.color[2] + ',' + item.color[1] + ',' + item.color[0] + ')'
+      }
+    },
+    saveTemplate(part) {
+      templateSave({
+        video_id: this.video_id,
+        task_id: this.task_id,
+        peoples: this.peoples
+      }).then((response) => {
+        if (response.code === 0) {
+          this.$message('保存模板成功')
+        }
+      })
+    },
+    pigeonhole() {
+      getActionsList(this.getListParams).then(response => {
+        this.actionsList = response.data
+        this.pigeonholeVisible = true
+      })
+    },
+    archive() {
+      archive({
+        task_id: this.task_id,
+        video_id: this.video_id,
+        action_id: this.actionForm.action_id,
+        reid: this.activePeoplePeopleNumber
+      }).then(response => {
+        if (response.code === 0) {
+          this.$message('模板归档成功')
+          this.$router.push('/templates/list')
+        }
       })
     }
   }

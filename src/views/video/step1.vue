@@ -149,43 +149,6 @@ export default {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
     this.getPeoples()
-    // this.$socket.on('key_people_response', (data) => {
-    //   console.log(data)
-    //   const people = _.find(this.peoples, { 'reid': data.data.reid })
-    //   if (people) {
-    //     const fragment = _.find(people.parts, { 'fragment': data.data.part.toString() })
-    //     if (fragment) {
-    //       fragment.imgs.push({
-    //         frame_index: data.data.frame_index,
-    //         url: data.data.image,
-    //         rect: data.data.pose_result.bbox
-    //       })
-    //     } else {
-    //       people.parts.push({
-    //         fragment: data.data.part.toString(),
-    //         imgs: [{
-    //           frame_index: data.data.frame_index,
-    //           url: data.data.image,
-    //           rect: data.data.pose_result.bbox
-    //         }]
-    //       })
-    //     }
-    //   } else {
-    //     this.peoples.push({
-    //       reid: data.data.reid,
-    //       parts: []
-    //     })
-    //     const people = _.find(this.peoples, { 'reid': data.data.reid })
-    //     people.parts.push({
-    //       fragment: data.data.part.toString(),
-    //       imgs: [{
-    //         frame_index: data.data.frame_index,
-    //         url: data.data.image,
-    //         rect: data.data.pose_result.bbox
-    //       }]
-    //     })
-    //   }
-    // })
   },
   mounted() {
     // 设置canvasWidth
@@ -208,8 +171,6 @@ export default {
         this.activePeople = this.result[0].reid + ''
         this.part = this.result[0]
         this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
-      } else {
-        this.$message.error(res.message)
       }
     })
     // var canvas = new fabric.Canvas('canvas')

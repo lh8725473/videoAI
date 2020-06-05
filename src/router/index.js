@@ -73,7 +73,7 @@ export const constantRoutes = [
       path: 'list',
       name: 'templatesList',
       component: () => import('@/views/templates/list'),
-      meta: { title: '模板列表', icon: 'form' }
+      meta: { title: '动作列表', icon: 'form' }
     },
     {
       path: 'mathResult',

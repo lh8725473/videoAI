@@ -136,3 +136,50 @@ export function keyframeSave(data) {
   })
 }
 
+export function drawImage(data) {
+  return request({
+    url: '/template/draw_image',
+    method: 'post',
+    data
+  })
+}
+
+export function templateSave(data) {
+  return request({
+    url: '/template/save',
+    method: 'post',
+    data
+  })
+}
+
+export function getActionsList(params) {
+  return request({
+    url: '/archiveTemplate/actions',
+    method: 'get',
+    params
+  })
+}
+
+export function addAction(data) {
+  return request({
+    url: '/archiveTemplate/add_action',
+    method: 'post',
+    data
+  })
+}
+
+export function getTemplateAction(params) {
+  return request({
+    url: 'template/template_action',
+    method: 'get',
+    params
+  })
+}
+
+export function archive(data) {
+  return request({
+    url: 'archiveTemplate/archive',
+    method: 'post',
+    data
+  })
+}

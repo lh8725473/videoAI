@@ -333,6 +333,7 @@ export default {
       }).then(response => {
         if (response.code === 0) {
           this.$message('模板生成成功')
+          this.$router.push('/video/step4?video_id=' + this.video_id + '&task_id=' + this.task_id)
         }
       })
     }

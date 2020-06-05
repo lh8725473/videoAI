@@ -1,16 +1,8 @@
 <template>
   <div class="app-container">
     <div class="action-butons">
+      <el-button size="small" type="primary" @click="addActionVisible = true">增加动作</el-button>
       <el-button size="small" type="primary" :disabled="buttonDis.templateMatch" @click="templateMatch()">模板匹配</el-button>
-      <!-- <el-upload
-        class="upload-demo"
-        :action="uploadUrl"
-        :show-file-list="false"
-        :on-success="uploadSuccess"
-        accept=".mp4"
-      >
-        <el-button size="small" type="primary">点击上传</el-button>
-      </el-upload> -->
     </div>
     <el-table
       v-loading="listLoading"
@@ -19,28 +11,59 @@
       border
       fit
       highlight-current-row
-      @selection-change="handleSelectionChange"
+      @expand-change="expandChange"
     >
-      <el-table-column
+      <!-- <el-table-column
         type="selection"
         width="40"
-      />
-      <el-table-column label="模板名称">
-        <template slot-scope="scope">
-          {{ scope.row.template_name }}
+      /> -->
+      <el-table-column type="expand">
+        <template slot-scope="props">
+          <el-table
+            ref="multipleTable"
+            :data="props.row.templateList"
+            style="width: 100%"
+            border
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column
+              type="selection"
+              width="55"
+            />
+            <el-table-column
+              label="模板名称"
+            >
+              <template slot-scope="scope">{{ scope.row.name }}</template>
+            </el-table-column>
+            <el-table-column
+              prop="create_time"
+              label="创建时间"
+              width="160"
+            />
+            <el-table-column
+              prop="video_name"
+              label="模板来源"
+              width="180"
+            />
+            <el-table-column
+              prop="reid"
+              label="人物REID"
+              width="120"
+            />
+          </el-table>
         </template>
       </el-table-column>
-      <el-table-column label="生成类型" width="110">
+      <el-table-column label="动作名称" width="110">
         <template slot-scope="scope">
-          {{ scope.row.operation_type | operationTypeFilter }}
+          {{ scope.row.action_name }}
         </template>
       </el-table-column>
-      <el-table-column label="视频名称" align="center">
+      <el-table-column label="动作描述">
         <template slot-scope="scope">
-          <span>{{ scope.row.video_name }}</span>
+          {{ scope.row.action_desc }}
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" width="110" align="center">
+      <el-table-column label="创建时间" width="160" align="center">
         <template slot-scope="scope">
           {{ scope.row.create_time }}
         </template>
@@ -118,11 +141,26 @@
         <el-button type="primary" :disabled="selectedVideo === null" @click="startMath">开 始 匹 配</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog title="增加动作" :visible.sync="addActionVisible">
+      <el-form :model="actionForm" label-width="100px">
+        <el-form-item label="动作名称">
+          <el-input v-model="actionForm.action_name" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="动作描述">
+          <el-input v-model="actionForm.action_desc" type="textarea" :rows="3" autocomplete="off" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addActionVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addAction()">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getVideoList, preClassify } from '@/api/video'
+import { getVideoList, preClassify, getActionsList, addAction, getTemplateAction } from '@/api/video'
 import { getTemplateList, startTemplateMatch } from '@/api/templates'
 import { setParts } from './parts.vm'
 import _ from 'lodash'
@@ -168,16 +206,33 @@ export default {
         templateMatch: true
       },
       videoListVisible: false,
+      addActionVisible: false,
       multipleSelection: null,
       selectedVideo: null,
       // element $loading()
-      loading: null
+      loading: null,
+      actionForm: {
+        action_name: '',
+        action_desc: ''
+      }
     }
   },
   created() {
-    this.getTemplateList()
+    this.getActionsList()
   },
   methods: {
+    getActionsList() {
+      this.listLoading = true
+      getActionsList(this.getListParams).then(response => {
+        console.log(response)
+        _.forEach(response.data, (atcion) => {
+          atcion.templateList = []
+        })
+        this.list = response.data
+        this.total = response.page_info.total
+        this.listLoading = false
+      })
+    },
     getTemplateList() {
       this.listLoading = true
       getTemplateList(this.getListParams).then(response => {
@@ -212,7 +267,8 @@ export default {
     },
     handleSelectionChange(val) {
       this.multipleSelection = val
-      this.buttonDis.templateMatch = !(this.multipleSelection.length > 0)
+      // this.buttonDis.templateMatch = !(this.multipleSelection.length > 0)
+      this.buttonDis.templateMatch = !(this.multipleSelection.length === 1)
     },
     templateMatch() {
       this.getVideoList()
@@ -222,14 +278,36 @@ export default {
       this.selectedVideo = video
     },
     startMath() {
-      this.loading = this.$loading({ fullscreen: true })
+      this.loading = this.$loading({
+        fullscreen: true,
+        text: '匹配模板中...'
+      })
       startTemplateMatch({
         video_id: this.selectedVideo.id,
-        template_id: _.map(this.multipleSelection, 'template_id')
+        action_template_id: _.map(this.multipleSelection, 'id')
       }).then(response => {
         setParts(response.data)
         this.loading.close()
         this.$router.push({ name: 'mathResult' })
+      })
+    },
+    addAction() {
+      addAction(this.actionForm).then(response => {
+        if (response.code === 0) {
+          this.$message('增加动作成功')
+          this.getActionsList()
+          this.addActionVisible = false
+        }
+      })
+    },
+    expandChange(row, expandedRows) {
+      getTemplateAction({
+        action_id: row.id
+      }).then(response => {
+        console.log(response)
+        if (response.code === 0) {
+          row.templateList = response.data
+        }
       })
     }
   }

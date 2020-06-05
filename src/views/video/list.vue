@@ -29,6 +29,26 @@
           {{ scope.row.file_size }}M
         </template>
       </el-table-column>
+      <el-table-column label="码率(kb/s)" width="110">
+        <template slot-scope="scope">
+          {{ (scope.row.bit_rate / 1000).toFixed(0) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="视频大小" width="110">
+        <template slot-scope="scope">
+          {{ scope.row.file_size }}M
+        </template>
+      </el-table-column>
+      <el-table-column label="视频格式" width="110">
+        <template slot-scope="scope">
+          {{ scope.row.type }}
+        </template>
+      </el-table-column>
+      <el-table-column label="总帧数" width="110">
+        <template slot-scope="scope">
+          {{ scope.row.nb_frames }}
+        </template>
+      </el-table-column>
       <el-table-column label="帧率" width="110" align="center">
         <template slot-scope="scope">
           <span>{{ scope.row.fps }}fps</span>
