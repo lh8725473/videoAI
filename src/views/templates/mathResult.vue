@@ -20,7 +20,7 @@
             </div>
             <template v-for="(match_frame, index) in part.match_frame_list">
               <p>匹配{{ index + 1 }}</p>
-              <div v-for="(img, index) in match_frame" :key="index" class="block">
+              <div v-for="(img, matchIndex) in match_frame" :key="matchIndex" class="block">
                 <el-image
                   style="width: 200px; height: 200px"
                   :src="baseAPI + img.frame_path"
