@@ -137,18 +137,18 @@ export const constantRoutes = [
   //   ]
   // },
 
-  // {
-  //   path: '/form',
-  //   component: Layout,
-  //   children: [
-  //     {
-  //       path: 'index',
-  //       name: 'Form',
-  //       component: () => import('@/views/form/index'),
-  //       meta: { title: 'Form', icon: 'form' }
-  //     }
-  //   ]
-  // },
+  {
+    path: '/math',
+    component: Layout,
+    children: [
+      {
+        path: 'list',
+        name: 'mathList',
+        component: () => import('@/views/templates/mathResultList'),
+        meta: { title: '匹配结果列表', icon: 'table' }
+      }
+    ]
+  },
 
   // {
   //   path: '/nested',

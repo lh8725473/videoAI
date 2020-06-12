@@ -33,7 +33,9 @@
             <el-table-column
               label="模板名称"
             >
-              <template slot-scope="scope">{{ scope.row.name }}</template>
+              <template slot-scope="scope">
+                <el-link type="primary" @click="toStep4(scope.row)">{{ scope.row.name }}</el-link>
+              </template>
             </el-table-column>
             <el-table-column
               prop="create_time"
@@ -84,8 +86,12 @@
         border
         fit
         highlight-current-row
-        @current-change="handleCurrentChange"
+        @selection-change="videoSelectionChange"
       >
+        <el-table-column
+          type="selection"
+          width="55"
+        />
         <el-table-column label="视频名称">
           <template slot-scope="scope">
             {{ scope.row.video_name }}
@@ -138,7 +144,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="videoListVisible = false">取 消</el-button>
-        <el-button type="primary" :disabled="selectedVideo === null" @click="startMath">开 始 匹 配</el-button>
+        <el-button type="primary" :disabled="selectedVideoList.length === 0" @click="startMath">开 始 匹 配</el-button>
       </span>
     </el-dialog>
 
@@ -161,7 +167,7 @@
 
 <script>
 import { getVideoList, preClassify, getActionsList, addAction, getTemplateAction } from '@/api/video'
-import { getTemplateList, startTemplateMatch } from '@/api/templates'
+import { getTemplateList, startTemplateMatch, templateMatchTest } from '@/api/templates'
 import { setParts } from './parts.vm'
 import _ from 'lodash'
 
@@ -214,7 +220,8 @@ export default {
       actionForm: {
         action_name: '',
         action_desc: ''
-      }
+      },
+      selectedVideoList: []
     }
   },
   created() {
@@ -267,8 +274,8 @@ export default {
     },
     handleSelectionChange(val) {
       this.multipleSelection = val
-      // this.buttonDis.templateMatch = !(this.multipleSelection.length > 0)
-      this.buttonDis.templateMatch = !(this.multipleSelection.length === 1)
+      this.buttonDis.templateMatch = !(this.multipleSelection.length > 0)
+      // this.buttonDis.templateMatch = !(this.multipleSelection.length === 1)
     },
     templateMatch() {
       this.getVideoList()
@@ -277,18 +284,31 @@ export default {
     handleCurrentChange(video) {
       this.selectedVideo = video
     },
+    videoSelectionChange(val) {
+      this.selectedVideoList = val
+    },
     startMath() {
-      this.loading = this.$loading({
-        fullscreen: true,
-        text: '匹配模板中...'
-      })
-      startTemplateMatch({
-        video_id: this.selectedVideo.id,
-        action_template_id: _.map(this.multipleSelection, 'id')
-      }).then(response => {
-        setParts(response.data)
-        this.loading.close()
-        this.$router.push({ name: 'mathResult' })
+      this.$prompt('请输入匹配名称', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /^[a-zA-Z0-9_\u4e00-\u9fa5]+/,
+        inputErrorMessage: '匹配名称不能为空'
+      }).then(({ value }) => {
+        this.loading = this.$loading({
+          fullscreen: true,
+          text: '匹配模板中...'
+        })
+        templateMatchTest({
+          task_name: value,
+          video_id: _.map(this.selectedVideoList, 'id'),
+          action_template_id: _.map(this.multipleSelection, 'id')
+        }).then(response => {
+          setParts(response)
+          this.loading.close()
+          this.$router.push({ name: 'mathResult' })
+        })
+      }).catch(() => {
+              
       })
     },
     addAction() {
@@ -309,6 +329,9 @@ export default {
           row.templateList = response.data
         }
       })
+    },
+    toStep4(row) {
+      this.$router.push('/video/step4?video_id=' + row.video_id + '&task_id=' + row.task_id + '&reid=' + row.reid)
     }
   }
 }

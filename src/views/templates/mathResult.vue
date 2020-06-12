@@ -1,7 +1,14 @@
 <template>
-  <div class="app-container">
+  <div class="app-container mathResult">
+    <div class="reult-info">{{ reultInfo.task_match_name }}</div>
+    <el-tabs v-model="activeTemplateId" type="card" @tab-click="templateChange">
+      <el-tab-pane v-for="template in templateList" :key="template.id" :label="'模板:' + template.name" :name="template.id + ''" />
+    </el-tabs>
+    <el-tabs v-model="activeVideoId" @tab-click="videoChange">
+      <el-tab-pane v-for="video in videoList" :key="video.video_id" :label="video.video_name" :name="video.video_id + ''" />
+    </el-tabs>
     <el-collapse v-model="activePart" accordion>
-      <el-collapse-item v-for="part in parts" :key="part.partFrames" :name="part.partFrames">
+      <el-collapse-item v-for="part in match_result" :key="part.partFrames" :name="part.partFrames">
         <template slot="title">
           <span class="tip">动作: {{ part.template_name }}</span>
           <span class="tip">匹配结果: {{ part.status | status }}</span>
@@ -9,24 +16,24 @@
         </template>
         <el-row>
           <div class="scroll-warp">
-            <p>模版</p>
+            <p>模版 <i class="el-icon-video-play" @click="playVideo(part.template_frame_list)" /></p>
             <div v-for="img in part.template_frame_list" :key="img.frame_id" class="block">
               <el-image
                 style="width: 200px; height: 200px"
                 :src="baseAPI + img.frame_path"
                 fit="contain"
               />
-              <span class="demonstration">帧号：{{ img.frame_id }}</span>
+              <span class="demonstration">帧号：{{ img.frame_id }} </span>
             </div>
             <template v-for="(match_frame, index) in part.match_frame_list">
-              <p>匹配{{ index + 1 }}</p>
-              <div v-for="(img, matchIndex) in match_frame" :key="matchIndex" class="block">
+              <p>匹配{{ index + 1 }} <i class="el-icon-video-play" @click="playVideo(match_frame)" /></p>
+              <div v-for="img in match_frame" :key="img.frame_id + index" class="block">
                 <el-image
                   style="width: 200px; height: 200px"
                   :src="baseAPI + img.frame_path"
                   fit="contain"
                 />
-                <span class="demonstration">帧号：{{ img.frame_id }}</span>
+                <span class="demonstration">帧号：{{ img.frame_id }} </span>
               </div>
             </template>
 
@@ -34,11 +41,47 @@
         </el-row>
       </el-collapse-item>
     </el-collapse>
+
+    <el-drawer
+      title="预览"
+      :visible.sync="drawer"
+      :with-header="false"
+      direction="rtl">
+      <!-- <el-image
+        style="width: 200px; height: 200px"
+        :src="paly_frame_path"
+        fit="contain"
+      /> -->
+      <div style="width: 350px; height: 350px; display: inline-block;">
+        <img :src="paly_frame_path" style="object-fit: contain;width: 100%; height: 100%;">
+      </div>
+    </el-drawer>
   </div>
 </template>
 
 <script>
 import { getParts, setParts } from './parts.vm'
+import _ from 'lodash'
+import { getMatchResult, getMatchSecond, getMatchTaskDetail } from '@/api/templates'
+
+function ImagePool(size) {
+  this.size = size
+  this.images = []
+  this.counter = 0
+}
+
+ImagePool.prototype.next = function() {
+  if (this.images.length < this.size) {
+    var image = new Image()
+    this.images.push(image)
+    return image
+  } else {
+    if (this.counter >= this.size) {
+      this.counter = 0
+    }
+    return this.images[this.counter++ % this.size]
+  }
+}
 
 export default {
   filters: {
@@ -56,98 +99,202 @@ export default {
   },
   data() {
     return {
+      reultInfo: {},
+      activeTemplateId: null,
+      templateList: [],
+      activeVideoId: null,
+      videoList: [],
       baseAPI: process.env.VUE_APP_BASE_API,
       activePart: [],
-      parts: []
+      parts: [],
+      match_result: [],
+      drawer: false,
+      canvasWidth: 300,
+      canvasBox: null,
+      paly_frame_path: null
     }
   },
   created() {
-    this.$socket.on('template_match', resp => {
-      console.log(resp)
-      if (resp.code === 0) {
-        setParts(resp.data)
-      }
-      this.parts = getParts()
-    })
-    this.parts = getParts()
+    // this.parts = getParts()
+    // console.log(this.parts)
+    // this.templateList = this.parts.match_task_detail
+    // this.activeTemplateId = this.templateList[0].action_id + ''
+    // this.videoList = this.templateList[0].video_list
+    // this.activeVideoId = this.videoList[0].video_id + ''
+    // this.getMatchResult()
+    this.task_match_id = this.$route.query.task_match_id
+    this.getMatchSecond()
   },
   mounted() {
+    // this.imgPoolMap = new ImagePool(10)
+    this.$socket.on('preview_key_frame', res => {
+      if (res.code === 0) {
+        this.paly_frame_path = res.data.frame_path
+        // this.renderVideo(this.canvasBox, res.data)
+      } else {
+        this.$message.error(res.message)
+      }
+    })
+  },
+  beforeDestroy() {
+    this.$socket.removeListener('preview_key_frame')
   },
   methods: {
+    getMatchSecond() {
+      getMatchSecond({
+        task_match_id: this.task_match_id
+      }).then(response => {
+        if (response.code === 0) {
+          this.reultInfo = response.data
+          this.templateList = this.reultInfo.match_task_detail
+          this.activeTemplateId = this.templateList[0].id + ''
+          this.videoList = this.templateList[0].video_list
+          this.activeVideoId = this.videoList[0].video_id + ''
+          this.getMatchTaskDetail()
+        }
+      })
+    },
+    templateChange(template) {
+      this.activeTemplateId = this.templateList[template.index].id + ''
+      this.videoList = this.templateList[template.index].video_list
+      this.activeVideoId = this.videoList[0].video_id + ''
+      this.getMatchTaskDetail()
+    },
+    videoChange(video) {
+      this.activeVideoId = this.videoList[video.index].video_id + ''
+      this.getMatchTaskDetail()
+    },
+    getMatchTaskDetail() {
+      console.log('getMatchTaskDetail')
+      getMatchTaskDetail({
+        task_match_id: this.reultInfo.task_match_id,
+        action_template_id: this.activeTemplateId,
+        video_id: this.activeVideoId
+      }).then(response => {
+        console.log(response)
+        if (response.code === 0) {
+          this.match_result = response.data.match_result
+        }
+      })
+    },
+    playVideo(frameList) {
+      this.drawer = true
+      // this.canvasBox = document.getElementById('video').getContext('2d')
+
+      this.$socket.emit('preview_frame', {
+        'start_frame_index': _.first(frameList).frame_id,
+        'end_frame_index': _.last(frameList).frame_id,
+        'video_id': parseInt(this.activeVideoId)
+      })
+    },
+    renderVideo(ctx, data) {
+      console.info(data)
+      const blob = new Blob([data.frame_path], { type: 'image/jpeg' })
+      let url = window.URL.createObjectURL(blob)
+
+      let img = this.imgPoolMap.next()
+      img.src = url
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, img.width, img.height)
+        img.onload = img.onerror = null
+        img.src = ''
+        img = null
+        URL.revokeObjectURL(url)
+      }
+      img.onerror = (err) => {
+        console.log(err)
+        img.onload = img.onerror = null
+        img = null
+        URL.revokeObjectURL(url)
+        url = null
+      }
+    }
   }
 }
 </script>
 
-<style lang="scss" scoped>
-.line{
-  text-align: center;
-}
-.el-row{
-  margin-bottom: 5px;
-}
-.el-icon-video-play{
-  font-size: 20px;
-  line-height: 28px;
-  color: #409EFF;
-  cursor: pointer;
-}
-.loading-div{
-  text-align: center;
-  margin-top: 50px;
-  font-size: 25px;
-  color: #E6A23C;
-  .el-icon-loading{
-    margin-bottom: 10px;
+<style lang="scss">
+.mathResult{
+  .el-drawer__body{
+    text-align: center;
   }
-}
-.warning-div{
-  text-align: center;
-  margin-top: 50px;
-  font-size: 25px;
-  color: #F56C6C;
-  .el-icon-warning-outline{
+  .reult-info{
+    color: #409EFF;
+    font-size: 20px;
     margin-bottom: 10px;
+    font-weight: bold;
   }
-}
-.action-buttons{
-  .el-button{
+  .line{
+    text-align: center;
+  }
+  .el-row{
+    margin-bottom: 5px;
+  }
+  .el-icon-video-play{
+    font-size: 20px;
+    line-height: 28px;
+    color: #409EFF;
+    cursor: pointer;
+  }
+  .loading-div{
+    text-align: center;
+    margin-top: 50px;
+    font-size: 25px;
+    color: #E6A23C;
+    .el-icon-loading{
+      margin-bottom: 10px;
+    }
+  }
+  .warning-div{
+    text-align: center;
+    margin-top: 50px;
+    font-size: 25px;
+    color: #F56C6C;
+    .el-icon-warning-outline{
+      margin-bottom: 10px;
+    }
+  }
+  .action-buttons{
+    .el-button{
+      width: 100%;
+    }
+  }
+  .block{
+    text-align: center;
+    display: inline-block;
+    width: 200px;
+    height: 230px;
+    box-sizing: border-box;
+    margin-right: 10px;
+  }
+  .el-image{
+    cursor: pointer;
+    background: #F5F7FA;
+  }
+  .tip{
+    margin-right: 20px;
+    padding: 0 20px 0 0;
+    font-size: 14px;
+  }
+  .app-container {
+    p {
+      margin: 0;
+    }
+    hr{
+      opacity: 0.2;
+    }
+  }
+  .scroll-warp{
     width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap
+  }
+  .demonstration{
+    display: block;
   }
 }
-.block{
-  text-align: center;
-  display: inline-block;
-  width: 200px;
-  height: 230px;
-  box-sizing: border-box;
-  margin-right: 10px;
-}
-.el-image{
-  cursor: pointer;
-  background: #F5F7FA;
-}
-.tip{
-  margin-right: 20px;
-  padding: 0 20px 0 0;
-  font-size: 14px;
-}
-.app-container {
-  p {
-    margin: 0;
-  }
-  hr{
-    opacity: 0.2;
-  }
-}
-.scroll-warp{
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  white-space: nowrap
-}
-.demonstration{
-  display: block;
-}
+
 
 </style>
 

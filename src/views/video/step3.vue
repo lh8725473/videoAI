@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <el-button size="medium" type="primary" style="position:absolute;right: 245px;top: 20px; z-index: 2;" @click="getKeyFrames(0)">还原系统结果</el-button>
     <el-button size="medium" type="primary" style="position:absolute;right: 120px;top: 20px; z-index: 2;" @click="keyframeSave()">保存关键帧</el-button>
     <el-button size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="nextStep()">下一步</el-button>
     <el-tabs v-model="activePeoplePeopleNumber" type="card" @tab-click="peopleChange">
@@ -16,11 +17,11 @@
             :group="{ name: 'people'}"
             ghost-class="ghost"
           >
-            <div v-for="(img, index) in part.key_frame" :key="img.frame_index" class="block">
+            <div v-for="(img, index) in part.key_frame" :key="img.frame_index" class="block" :class="{'cru-frame-index': img.frame_index === part.cruframe_index}">
               <i class="el-icon-circle-close" @click="deleteImg(part.key_frame, index)" />
               <el-image
-                style="width: 200px; height: 200px"
-                :src="img.frame_path"
+                style="width: 198px; height: 200px"
+                :src="img.full_frame_path"
                 fit="contain"
                 @click="previewFrame(img, part)"
               />
@@ -31,16 +32,25 @@
 
         <div class="previewParts">
           <el-row v-show="part.previewParts.length > 0">
-            关键帧附近帧
+            关键帧附近帧(前后各10帧)
+            <el-button-group>
+              <el-button size="mini" type="primary" icon="el-icon-arrow-left" @click="previewPartsChange(part, -1)">上一页</el-button>
+              <el-button size="mini" type="primary" icon="el-icon-arrow-left" @click="previewPartsChange(part, 1)">下一页</el-button>
+            </el-button-group>
+            <span class="el-pagination__jump">
+              当前
+              <div class="el-input el-pagination__editor is-in-pagination"><el-input v-model="part.cruframe_index" @keyup.enter.native="previewPartsChange(part)" /></div>
+              帧
+            </span>
           </el-row>
           <draggable
             v-model="part.previewParts"
             :group="{ name: 'people', put: false }"
             ghost-class="ghost"
           >
-            <div v-for="img in part.previewParts" :key="img.frame_index" class="block">
+            <div v-for="img in part.previewParts" :key="img.frame_index" class="block" :class="{'cru-frame-index': img.frame_index === part.cruframe_index}">
               <el-image
-                style="width: 200px; height: 200px"
+                style="width: 198px; height: 200px"
                 :src="img.frame_path"
                 fit="contain"
               />
@@ -48,118 +58,6 @@
             </div>
           </draggable>
         </div>
-
-        <!-- <el-tabs v-model="part.activeImg">
-          <el-tab-pane v-for="imgDetail in part.imgDetails" :key="imgDetail.frame_index" :label="'人物关键帧:' + imgDetail.frame_index" :name="imgDetail.frame_index">
-            <el-row>
-              <el-col :span="12">
-                <el-image
-                  style="width: 100%; height: 300px"
-                  :src="baseAPI + imgDetail.frame_path"
-                  fit="contain"
-                  @click="addImg(imgDetail, part)"
-                />
-              </el-col>
-              <el-col :span="12">
-                <el-tabs v-model="stringdsad" type="card">
-                  <el-tab-pane label="人物重心" name="人物重心">
-                    人物重心坐标：{{ imgDetail.gravity_center }}
-                  </el-tab-pane>
-                  <el-tab-pane label="人物关节点/距离" name="人物关节点/距离">
-                    <el-row>
-                      <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">距离(px)</el-col>
-                      <el-col :offset="1" :span="5">阈值(±0.5)
-                        <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
-                          <i class="el-icon-warning-outline" />
-                        </el-tooltip>
-                      </el-col>
-                      <el-col :offset="1" :span="5">权重(0-1)
-                        <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
-                          <i class="el-icon-warning-outline" />
-                        </el-tooltip>
-                      </el-col>
-                    </el-row>
-                    <el-row v-for="(item, index) in imgDetail.inclination" :key="index">
-                      <el-col :span="5">
-                        <el-input v-model="item.describe" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.value" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.threshold" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.weight" size="mini" />
-                      </el-col>
-                    </el-row>
-                  </el-tab-pane>
-                  <el-tab-pane label="人物关节点/角度" name="人物关节点/角度">
-                    <el-row>
-                      <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">角度(度数)</el-col>
-                      <el-col :offset="1" :span="5">阈值(±60°)
-                        <el-tooltip class="item" effect="dark" content="角度阈值±60°内可选" placement="top-start">
-                          <i class="el-icon-warning-outline" />
-                        </el-tooltip>
-                      </el-col>
-                      <el-col :offset="1" :span="5">权重(0-1)
-                        <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
-                          <i class="el-icon-warning-outline" />
-                        </el-tooltip>
-                      </el-col>
-                    </el-row>
-                    <el-row v-for="(item, index) in imgDetail.vertical" :key="index">
-                      <el-col :span="5">
-                        <el-input v-model="item.describe" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.value" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.threshold" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.weight" size="mini" />
-                      </el-col>
-                    </el-row>
-                  </el-tab-pane>
-                  <el-tab-pane label="人与静止物体距离" name="人与静止物体距离">
-                    <el-row>
-                      <el-col :span="5">描述</el-col>
-                      <el-col :offset="1" :span="5">距离(px)</el-col>
-                      <el-col :offset="1" :span="5">阈值(±0.5)
-                        <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
-                          <i class="el-icon-warning-outline" />
-                        </el-tooltip>
-                      </el-col>
-                      <el-col :offset="1" :span="5">权重(0-1)
-                        <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
-                          <i class="el-icon-warning-outline" />
-                        </el-tooltip>
-                      </el-col>
-                    </el-row>
-                    <el-row v-for="(item, index) in imgDetail.ob" :key="index">
-                      <el-col :span="5">
-                        <el-input v-model="item.describe" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.value" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.threshold" size="mini" />
-                      </el-col>
-                      <el-col :offset="1" :span="5">
-                        <el-input v-model="item.weight" size="mini" />
-                      </el-col>
-                    </el-row>
-                  </el-tab-pane>
-                </el-tabs>
-              </el-col>
-            </el-row>
-          </el-tab-pane>
-        </el-tabs> -->
       </el-collapse-item>
     </el-collapse>
   </div>
@@ -205,7 +103,6 @@ export default {
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
-    console.log(this.peoples)
     this.getKeyFrames()
     let people = {}
     let part = {}
@@ -219,41 +116,30 @@ export default {
   mounted() {
     this.$socket.on('preview_key_frame', (data) => {
       const part = _.find(this.parts, { id: this.cruPartId })
-      console.log(part)
+      data.data.full_frame_path = data.data.frame_path
       part.previewParts.push(data.data)
     })
-    // this.$socket.on('key_frame_response', (res) => {
-    //   console.log(res)
-    //   if (res.code === 0) {
-    //     console.log(res)
-    //   } else {
-    //     this.$message.error(res.message)
-    //   }
-    // })
   },
   beforeDestroy() {
     this.$socket.removeListener('key_frame_response')
     this.$socket.removeListener('preview_key_frame')
   },
   methods: {
-    getKeyFrames() {
+    getKeyFrames(operation_type) {
       getKeyFrames({
         video_id: this.video_id,
-        task_id: this.task_id
+        task_id: this.task_id,
+        operation_type: operation_type
       }).then(response => {
         _.forEach(response.data.peoples, (people) => {
           _.forEach(people.data, (partInfo) => {
             partInfo.previewParts = []
+            partInfo.cruframe_index = 0
           })
         })
         this.peoples = response.data.peoples
         this.activePeople = this.peoples[0]
         this.activePeoplePeopleNumber = this.peoples[0].reid + ''
-        // _.forEach(this.peoples, (people) => {
-        //   _.forEach(people.data, (partInfo) => {
-        //     this.$set(partInfo, 'previewParts', [])
-        //   })
-        // })
         this.parts = this.peoples[0].data
         console.log(this.peoples)
       })
@@ -262,13 +148,13 @@ export default {
       part.splice(index, 1)
     },
     previewFrame(img, part) {
-      console.log(img.frame_index)
       this.$socket.emit('preview_frame', {
         start_frame_index: img.frame_index - 10,
         end_frame_index: img.frame_index + 10,
         video_id: this.video_id
       })
       this.cruPartId = part.id
+      part.cruframe_index = img.frame_index
       const cruPart = _.find(this.parts, { id: this.cruPartId })
       cruPart.previewParts = []
     },
@@ -285,7 +171,6 @@ export default {
         task_id: this.task_id,
         frame_id: img.frame_index
       }).then(response => {
-        console.log(response)
         if (!_.find(part.imgDetails, { frame_index: img.frame_index })) {
           part.imgDetails.push(response.data)
           part.activeImg = img.frame_index
@@ -336,6 +221,20 @@ export default {
           this.$router.push('/video/step4?video_id=' + this.video_id + '&task_id=' + this.task_id)
         }
       })
+    },
+    previewPartsChange(part, num) {
+      if (num) {
+        part.cruframe_index = part.cruframe_index + num * 10
+      }
+      part.cruframe_index = parseInt(part.cruframe_index)
+      this.$socket.emit('preview_frame', {
+        start_frame_index: parseInt(part.cruframe_index) - 10,
+        end_frame_index: parseInt(part.cruframe_index) + 10,
+        video_id: this.video_id
+      })
+      this.cruPartId = part.id
+      const cruPart = _.find(this.parts, { id: this.cruPartId })
+      cruPart.previewParts = []
     }
   }
 }
@@ -386,7 +285,7 @@ export default {
   display: inline-block;
   width: 200px;
   box-sizing: border-box;
-  margin-right: 10px;
+  margin-right: 20px;
   .el-icon-circle-close{
     position: absolute;
     right: -12px;
@@ -398,6 +297,9 @@ export default {
   .el-image{
     background-color: #f2f6fc;
   }
+  &.cru-frame-index{
+    border: 1px solid #409EFF;
+  }
 }
 .el-image{
   cursor: pointer;
@@ -407,6 +309,15 @@ export default {
 }
 .key_frame{
   padding-top: 10px;
+}
+.previewParts{
+  margin-top: 10px;
+  .el-button-group{
+    margin-left: 15px;
+  }
+  .el-pagination__jump{
+    margin-left: 10px;
+  }
 }
 </style>
 

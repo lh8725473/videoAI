@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container step2">
     <el-row>
       <el-col :span="12">
         <video ref="video" width="100%" height="480" :src="baseAPI + videoInfo.path" controls="controls">
@@ -9,6 +9,7 @@
       <el-col v-show="taskInfo.status === '2'" :offset="1" :span="11">
         <el-button v-show="!isEdit" size="small" type="primary" style="position:absolute;right: 0;top: 2px; z-index: 2;" @click="isEdit = true">编 辑</el-button>
         <el-button v-show="!isEdit" size="small" type="primary" style="position:absolute;right: 66px;top: 2px; z-index: 2;" @click="getPreClassify()">重 置</el-button>
+        <el-button v-show="!isEdit" size="small" type="primary" style="position:absolute;right: 132px;top: 2px; z-index: 2;" @click="getPreClassify(0)">还原系统结果</el-button>
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 0px;top: 2px; z-index: 2;" @click="savePart()">完 成</el-button>
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 66px;top: 2px; z-index: 2;" :disabled="btnsDis.delete" @click="deletePart()">删 除</el-button>
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 132px;top: 2px; z-index: 2;" :disabled="btnsDis.merge" @click="mergePart()">合 并</el-button>
@@ -18,9 +19,9 @@
         </el-tabs>
         <el-row>
           <el-col :span="6">动作名</el-col>
-          <el-col :offset="1" :span="4">开始帧</el-col>
-          <el-col :offset="1" :span="4">结束帧</el-col>
-          <el-col :offset="1" :span="5">时间段(秒)</el-col>
+          <el-col :offset="1" :span="3">开始帧</el-col>
+          <el-col :offset="1" :span="3">结束帧</el-col>
+          <el-col :offset="1" :span="7">时间段(秒)</el-col>
         </el-row>
         <el-row v-for="(item, index) in part" :key="index">
           <el-col v-show="isEdit" :span="6">
@@ -34,13 +35,13 @@
           <el-col v-show="!isEdit" :span="6">
             <el-input v-model="item.name" size="mini"  disabled/>
           </el-col>
-          <el-col :offset="1" :span="4">
+          <el-col :offset="1" :span="3">
             <el-input v-model="item.start_frame_index" size="mini" :disabled="!isEdit"/>
           </el-col>
-          <el-col :offset="1" :span="4">
+          <el-col :offset="1" :span="3">
             <el-input v-model="item.end_frame_index" size="mini" :disabled="!isEdit"/>
           </el-col>
-          <el-col :offset="1" :span="5" style="line-height: 28px;">
+          <el-col :offset="1" :span="7" style="line-height: 28px;">
             {{ item.start_time | timeFilter(item, fps) }}
           </el-col>
           <el-col :offset="1" :span="1">
@@ -142,7 +143,7 @@ export default {
     },
     timeFilter(start_time, item, fps) {
       const srartString = item.start_frame_index === 1 ? 0 : (item.start_frame_index / fps).toFixed(2)
-      return srartString + '至' + (item.end_frame_index / fps).toFixed(2)
+      return srartString + '至' + (item.end_frame_index / fps).toFixed(2) + '(共' + (item.end_frame_index / fps - item.start_frame_index / fps).toFixed(2) + ')'
     }
   },
   data() {
@@ -199,10 +200,11 @@ export default {
         this.videoInfo = response.data
       })
     },
-    getPreClassify() {
+    getPreClassify(operation_type) {
       getPreClassify({
         video_id: this.video_id,
-        task_id: this.task_id
+        task_id: this.task_id,
+        operation_type: operation_type
       }).then(response => {
         this.result = response.data.data
         if (this.result.length > 0) {
@@ -309,44 +311,46 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-.line{
-  text-align: center;
-}
-.el-row{
-  margin-bottom: 5px;
-}
-.el-icon-video-play{
-  font-size: 20px;
-  line-height: 28px;
-  color: #409EFF;
-  cursor: pointer;
-}
-.loading-div{
-  text-align: center;
-  margin-top: 50px;
-  font-size: 25px;
-  color: #E6A23C;
-  .el-icon-loading{
-    margin-bottom: 10px;
+<style lang="scss">
+.step2{
+  .line{
+    text-align: center;
   }
-}
-.warning-div{
-  text-align: center;
-  margin-top: 50px;
-  font-size: 25px;
-  color: #F56C6C;
-  .el-icon-warning-outline{
-    margin-bottom: 10px;
+  .el-row{
+    margin-bottom: 5px;
   }
-}
-.action-buttons{
-  .el-button{
-    width: 100%;
+  .el-icon-video-play{
+    font-size: 20px;
+    line-height: 28px;
+    color: #409EFF;
+    cursor: pointer;
   }
-}
-.el-input.is-disabled .el-input__inner{
-  color: #606266;
+  .loading-div{
+    text-align: center;
+    margin-top: 50px;
+    font-size: 25px;
+    color: #E6A23C;
+    .el-icon-loading{
+      margin-bottom: 10px;
+    }
+  }
+  .warning-div{
+    text-align: center;
+    margin-top: 50px;
+    font-size: 25px;
+    color: #F56C6C;
+    .el-icon-warning-outline{
+      margin-bottom: 10px;
+    }
+  }
+  .action-buttons{
+    .el-button{
+      width: 100%;
+    }
+  }
+  .el-input.is-disabled .el-input__inner{
+    color: #606266;
+  }
 }
 </style>
 

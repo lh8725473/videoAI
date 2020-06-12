@@ -14,7 +14,7 @@
           <div v-for="img in part.key_frame" :key="img.frame_index" class="block">
             <el-image
               style="width: 200px; height: 200px"
-              :src="baseAPI + img.frame_path"
+              :src="img.full_frame_path"
               fit="contain"
               @click="addImg(img, part)"
             />
@@ -23,7 +23,7 @@
         </div>
 
         <el-tabs v-model="part.activeImg">
-          <el-tab-pane v-for="imgDetail in part.templateDetail" v-if="imgDetail.frame_index" :key="imgDetail.frame_index" :label="'人物关键帧:' + imgDetail.frame_index" :name="imgDetail.frame_index + ''">
+          <el-tab-pane v-for="imgDetail in part.templateDetail" :key="imgDetail.frame_index" :label="'人物关键帧:' + imgDetail.frame_index" :name="imgDetail.frame_index + ''">
             <el-row>
               <el-col :span="12">
                 <el-image
@@ -31,6 +31,10 @@
                   :src="imgDetail.full_frame_path"
                   fit="contain"
                 />
+                <div style="text-align: center;">
+                  <span>人物重心坐标:{{ imgDetail.features.gravity_center }} </span>
+                  <el-button size="mini" type="primary" @click="resetData(imgDetail, part)">还原系统结果</el-button>
+                </div>
               </el-col>
               <el-col v-if="imgDetail.features" :span="12">
                 <el-tabs v-model="stringdsad" type="card">
@@ -163,7 +167,8 @@
 
 <script>
 import { Sortable, Swap } from 'sortablejs/modular/sortable.core.esm'
-import { getKeyFrames, getImageFeature, createTemplate, getTemplate, drawImage, templateSave, getActionsList, archive } from '@/api/video'
+import { getKeyFrames, getFrameFeature, createTemplate, getTemplate, drawImage, templateSave, getActionsList, archive } from '@/api/video'
+import { saveTemplate } from '@/api/templates'
 // import { fabric } from 'fabric'
 import _ from 'lodash'
 // const { fabric } = require('fabric')
@@ -197,18 +202,20 @@ export default {
       actionsList: [],
       actionForm: {
         action_id: ''
-      }
+      },
+      templateDetailList: []
     }
   },
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
-    this.loading = this.$loading({
-      fullscreen: true,
-      text: '模板生成中',
-      background: 'rgba(0, 0, 0, 0.7)'
-    })
-    this.getTemplate()
+    this.reid = this.$route.query.reid
+    // this.loading = this.$loading({
+    //   fullscreen: true,
+    //   text: '模板生成中',
+    //   background: 'rgba(0, 0, 0, 0.7)'
+    // })
+    this.getKeyFrames()
   },
   mounted() {
     // this.$socket.on('frame_template', (res) => {
@@ -221,22 +228,52 @@ export default {
     this.$socket.on('template_status', (res) => {
       console.log('template_status')
       console.log(res)
-      if (res.data.status) {
-        this.loading.close()
-      }
+      // if (res.data.status) {
+      //   this.loading.close()
+      // }
     })
   },
   methods: {
+    getKeyFrames() {
+      getKeyFrames({
+        video_id: this.video_id,
+        task_id: this.task_id,
+        reid: this.reid
+      }).then(response => {
+        // console.log(_.last(_.last(_.last(response.data.peoples).data).key_frame).template)
+        // if (!_.isEmpty(_.last(_.last(_.last(response.data.peoples).data).key_frame).template)) {
+        //   console.log('close')
+        //   this.loading.close()
+        // }
+        _.forEach(response.data.peoples, (people) => {
+          _.forEach(people.data, (part) => {
+            part.templateDetail = []
+            _.forEach(part.key_frame, (frame) => {
+              // frame.template.part_id = part.id
+              // frame.template.frame_index = frame.frame_index
+              // frame.template.frame_path = frame.frame_path
+              // frame.template.full_frame_path = process.env.VUE_APP_BASE_API + frame.frame_path
+              // part.templateDetail.push(frame.template)
+            })
+          })
+        })
+        this.peoples = response.data.peoples
+        this.activePeople = this.peoples[0]
+        this.activePeoplePeopleNumber = this.peoples[0].reid + ''
+        this.parts = this.peoples[0].data
+        console.log(this.parts)
+      })
+    },
     getTemplate() {
       getTemplate({
         video_id: this.video_id,
         task_id: this.task_id
       }).then(response => {
-        console.log(_.last(_.last(_.last(response.data.peoples).data).key_frame).template)
-        if (!_.isEmpty(_.last(_.last(_.last(response.data.peoples).data).key_frame).template)) {
-          console.log('close')
-          this.loading.close()
-        }
+        // console.log(_.last(_.last(_.last(response.data.peoples).data).key_frame).template)
+        // if (!_.isEmpty(_.last(_.last(_.last(response.data.peoples).data).key_frame).template)) {
+        //   console.log('close')
+        //   this.loading.close()
+        // }
         _.forEach(response.data.peoples, (people) => {
           _.forEach(people.data, (part) => {
             part.templateDetail = []
@@ -244,7 +281,7 @@ export default {
               frame.template.part_id = part.id
               frame.template.frame_index = frame.frame_index
               frame.template.frame_path = frame.frame_path
-              frame.template.full_frame_path = process.env.VUE_APP_BASE_API + frame.frame_path
+              frame.template.full_frame_path = frame.full_frame_path
               part.templateDetail.push(frame.template)
             })
           })
@@ -264,16 +301,36 @@ export default {
     },
     addImg(img, part) {
       console.log(img)
-
-      getImageFeature({
+      if (_.find(part.templateDetail, { frame_index: img.frame_index })) {
+        return
+      }
+      getFrameFeature({
         video_id: this.video_id,
         task_id: this.task_id,
-        frame_id: img.frame_index
+        part_id: part.id,
+        frame_index: img.frame_index,
+        reid: this.activePeoplePeopleNumber
       }).then(response => {
-        console.log(response)
-        if (!_.find(part.imgDetails, { frame_index: img.frame_index })) {
-          part.imgDetails.push(response.data)
-          part.activeImg = img.frame_index
+        response.data.frame_path = img.frame_path
+        response.data.full_frame_path = img.full_frame_path
+        if (response.code === 0) {
+          part.templateDetail.push(response.data)
+          part.activeImg = response.data.frame_index + ''
+          this.templateDetailList.push(response.data)
+        }
+      })
+    },
+    resetData(img, part) {
+      getFrameFeature({
+        video_id: this.video_id,
+        task_id: this.task_id,
+        part_id: part.id,
+        frame_index: img.frame_index,
+        reid: this.activePeoplePeopleNumber,
+        operation_type: 0
+      }).then(response => {
+        if (response.code === 0) {
+          img.features = response.data.features
         }
       })
     },
@@ -291,10 +348,8 @@ export default {
       }
     },
     saveTemplate(part) {
-      templateSave({
-        video_id: this.video_id,
-        task_id: this.task_id,
-        peoples: this.peoples
+      saveTemplate({
+        data: this.templateDetailList
       }).then((response) => {
         if (response.code === 0) {
           this.$message('保存模板成功')

@@ -80,6 +80,14 @@ export function getImageFeature(params) {
   })
 }
 
+export function getFrameFeature(params) {
+  return request({
+    url: '/template/get_frame_feature',
+    method: 'get',
+    params
+  })
+}
+
 export function createTemplate(data) {
   return request({
     url: '/template/create_template',

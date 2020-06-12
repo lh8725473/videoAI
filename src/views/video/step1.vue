@@ -173,6 +173,13 @@ export default {
         this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
       }
     })
+
+    this.$socket.emit('show_frame', {
+      'task_id': this.task_id,
+      'video_id': this.video_id,
+      'reid': this.activePeople,
+      'frame_index': parseInt(this.formInline.curFrameIndex)
+    })
     // var canvas = new fabric.Canvas('canvas')
 
     // var rect = new fabric.Rect({
