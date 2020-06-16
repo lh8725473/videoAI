@@ -66,7 +66,7 @@ export default {
       const statusMap = {
         '0': '创建任务完成',
         '1': '开始任务',
-        '2': '任务正结束',
+        '2': '任务正常结束',
         '-100': '任务异常结束'
       }
       return statusMap[status]

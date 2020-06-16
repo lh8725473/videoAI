@@ -23,31 +23,39 @@
           <el-col :offset="1" :span="3">结束帧</el-col>
           <el-col :offset="1" :span="7">时间段(秒)</el-col>
         </el-row>
-        <el-row v-for="(item, index) in part" :key="index">
-          <el-col v-show="isEdit" :span="6">
-            <el-col :span="4" style="line-height: 28px;">
-              <el-checkbox v-model="item.checked" @change="checkedChange" />
+        <draggable
+            v-model="part.key_frame"
+            :group="{ name: 'people'}"
+            ghost-class="ghost"
+            handle=".el-icon-sort"
+          >
+          <el-row v-for="(item, index) in part" :key="index">
+            <el-col v-show="isEdit" :span="6">
+              <el-col :span="8" style="line-height: 28px;">
+                <i class="el-icon-sort"/>
+                <el-checkbox v-model="item.checked" @change="checkedChange" />
+              </el-col>
+              <el-col :span="16">
+                <el-input v-model="item.name" size="mini" />
+              </el-col>
             </el-col>
-            <el-col :span="20">
-              <el-input v-model="item.name" size="mini" />
+            <el-col v-show="!isEdit" :span="6">
+              <el-input v-model="item.name" size="mini"  disabled/>
             </el-col>
-          </el-col>
-          <el-col v-show="!isEdit" :span="6">
-            <el-input v-model="item.name" size="mini"  disabled/>
-          </el-col>
-          <el-col :offset="1" :span="3">
-            <el-input v-model="item.start_frame_index" size="mini" :disabled="!isEdit"/>
-          </el-col>
-          <el-col :offset="1" :span="3">
-            <el-input v-model="item.end_frame_index" size="mini" :disabled="!isEdit"/>
-          </el-col>
-          <el-col :offset="1" :span="7" style="line-height: 28px;">
-            {{ item.start_time | timeFilter(item, fps) }}
-          </el-col>
-          <el-col :offset="1" :span="1">
-            <i class="el-icon-video-play" @click="playVideo(item)" />
-          </el-col>
-        </el-row>
+            <el-col :offset="1" :span="3">
+              <el-input v-model="item.start_frame_index" size="mini" :disabled="!isEdit"/>
+            </el-col>
+            <el-col :offset="1" :span="3">
+              <el-input v-model="item.end_frame_index" size="mini" :disabled="!isEdit"/>
+            </el-col>
+            <el-col :offset="1" :span="7" style="line-height: 28px;">
+              {{ item.start_time | timeFilter(item, fps) }}
+            </el-col>
+            <el-col :offset="1" :span="1">
+              <i class="el-icon-video-play" @click="playVideo(item)" />
+            </el-col>
+          </el-row>
+        </draggable>
         <el-image
           style="width: 200px; height: 200px"
           :src="url"
@@ -122,8 +130,12 @@
 <script>
 import { getPreClassify, getPreClassifyList, getVideoInfo, keyPeople, savePreClassify, keyFrames } from '@/api/video'
 import _ from 'lodash'
+import draggable from 'vuedraggable'
 
 export default {
+  components: {
+    draggable
+  },
   filters: {
     statusFilter(status) {
       const statusMap = {
@@ -350,6 +362,9 @@ export default {
   }
   .el-input.is-disabled .el-input__inner{
     color: #606266;
+  }
+  .el-icon-sort{
+    cursor: pointer;
   }
 }
 </style>

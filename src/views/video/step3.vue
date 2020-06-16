@@ -32,16 +32,15 @@
 
         <div class="previewParts">
           <el-row v-show="part.previewParts.length > 0">
-            关键帧附近帧(前后各10帧)
-            <el-button-group>
-              <el-button size="mini" type="primary" icon="el-icon-arrow-left" @click="previewPartsChange(part, -1)">上一页</el-button>
-              <el-button size="mini" type="primary" icon="el-icon-arrow-left" @click="previewPartsChange(part, 1)">下一页</el-button>
-            </el-button-group>
             <span class="el-pagination__jump">
               当前
               <div class="el-input el-pagination__editor is-in-pagination"><el-input v-model="part.cruframe_index" @keyup.enter.native="previewPartsChange(part)" /></div>
               帧
-            </span>
+            </span>(前后各10帧)
+            <el-button-group>
+              <el-button size="mini" type="primary" icon="el-icon-arrow-left" @click="previewPartsChange(part, -1)">上一页</el-button>
+              <el-button size="mini" type="primary" @click="previewPartsChange(part, 1)">下一页<i class="el-icon-arrow-right el-icon--right" /></el-button>
+            </el-button-group>
           </el-row>
           <draggable
             v-model="part.previewParts"

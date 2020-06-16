@@ -41,7 +41,7 @@
                   <!-- <el-tab-pane label="人物重心" name="人物重心">
                     人物重心坐标：{{ imgDetail.features.gravity_center }}
                   </el-tab-pane> -->
-                  <el-tab-pane label="人物关节点/距离" name="人物关节点/距离">
+                  <el-tab-pane :label="'人物关节点/距离(' + imgDetail.features.inclination_count + ')' " name="人物关节点/距离">
                     <el-row>
                       <el-col :span="8">描述</el-col>
                       <el-col :offset="1" :span="4">距离(px)</el-col>
@@ -64,14 +64,14 @@
                         <el-input v-model="item.value" size="mini" />
                       </el-col>
                       <el-col :offset="1" :span="4">
-                        <el-input v-model="item.threshold" size="mini" />
+                        <el-input v-model="item.threshold" @change="computedFeaturesCount(imgDetail.features)" size="mini" />
                       </el-col>
                       <el-col :offset="1" :span="4">
-                        <el-input v-model="item.weight" size="mini" />
+                        <el-input v-model="item.weight" @change="computedFeaturesCount(imgDetail.features)" size="mini" />
                       </el-col>
                     </el-row>
                   </el-tab-pane>
-                  <el-tab-pane label="人物关节点/角度" name="人物关节点/角度">
+                  <el-tab-pane :label="'人物关节点/角度(' + imgDetail.features.vertical_count + ')'" name="人物关节点/角度">
                     <el-row>
                       <el-col :span="8">描述</el-col>
                       <el-col :offset="1" :span="4">角度(度数)</el-col>
@@ -94,14 +94,14 @@
                         <el-input v-model="item.value" size="mini" />
                       </el-col>
                       <el-col :offset="1" :span="4">
-                        <el-input v-model="item.threshold" size="mini" />
+                        <el-input v-model="item.threshold" @change="computedFeaturesCount(imgDetail.features)" size="mini" />
                       </el-col>
                       <el-col :offset="1" :span="4">
-                        <el-input v-model="item.weight" size="mini" />
+                        <el-input v-model="item.weight" @change="computedFeaturesCount(imgDetail.features)" size="mini" />
                       </el-col>
                     </el-row>
                   </el-tab-pane>
-                  <el-tab-pane label="人与静止物体距离" name="人与静止物体距离">
+                  <el-tab-pane :label="'人与静止物体距离(' + imgDetail.features.ob_list_count + ')'" name="人与静止物体距离">
                     <el-row>
                       <el-col :span="8">描述</el-col>
                       <el-col :offset="1" :span="4">距离(px)</el-col>
@@ -119,7 +119,7 @@
                     <el-row v-for="(item, index) in imgDetail.features.ob_list" :key="index">
                       <el-col :span="8">
                         <el-col :span="4" style="line-height: 28px;">
-                          <el-checkbox v-model="item.status" :true-label="1" :false-label="0" @change="checkedChange(imgDetail.features.ob_list, imgDetail.frame_path, imgDetail)" />
+                          <el-checkbox v-model="item.status" :true-label="1" :false-label="0" @change="checkedChange(imgDetail.features.ob_list, imgDetail.frame_path, imgDetail, imgDetail.features)" />
                         </el-col>
                         <el-col :span="20" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" :title="item.describe">
                           <span :style="styleObject(item)">{{ item.describe }}</span>
@@ -282,6 +282,7 @@ export default {
               frame.template.frame_index = frame.frame_index
               frame.template.frame_path = frame.frame_path
               frame.template.full_frame_path = frame.full_frame_path
+              // frame.template
               part.templateDetail.push(frame.template)
             })
           })
@@ -314,11 +315,27 @@ export default {
         response.data.frame_path = img.frame_path
         response.data.full_frame_path = img.full_frame_path
         if (response.code === 0) {
+          response.data.features.vertical_count = 0
+          response.data.features.inclination_count = 0
+          response.data.features.ob_list_count = 0
+          this.computedFeaturesCount(response.data.features)
           part.templateDetail.push(response.data)
           part.activeImg = response.data.frame_index + ''
           this.templateDetailList.push(response.data)
         }
       })
+    },
+    computedFeaturesCount(features) {
+      console.log('computedFeaturesCount')
+      features.inclination_count = _.filter(features.inclination, (item) => {
+        return item.threshold != 0 && item.weight != 0
+      }).length
+      features.vertical_count = _.filter(features.vertical, (item) => {
+        return item.threshold != 0 && item.weight != 0
+      }).length
+      features.ob_list_count = _.filter(features.ob_list, (item) => {
+        return item.status === 1
+      }).length
     },
     resetData(img, part) {
       getFrameFeature({
@@ -330,17 +347,21 @@ export default {
         operation_type: 0
       }).then(response => {
         if (response.code === 0) {
+          response.data.features.vertical_count = 0
+          response.data.features.inclination_count = 0
+          response.data.features.ob_list_count = 0
           img.features = response.data.features
         }
       })
     },
-    checkedChange(object_location, frame_path, imgDetail) {
+    checkedChange(object_location, frame_path, imgDetail, features) {
       drawImage({
         object_location: object_location,
         frame_path: frame_path
       }).then((response) => {
         imgDetail.full_frame_path = response.data.frame
       })
+      this.computedFeaturesCount(features)
     },
     styleObject(item) {
       return {
