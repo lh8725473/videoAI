@@ -27,7 +27,7 @@
             </div>
             <template v-for="(match_frame, index) in part.match_frame_list">
               <p>匹配{{ index + 1 }} <i class="el-icon-video-play" @click="playVideo(match_frame)" /></p>
-              <div v-for="img in match_frame" :key="img.frame_id + index" class="block">
+              <div v-for="(img, imgIndex) in match_frame" :key="imgIndex" class="block">
                 <el-image
                   style="width: 200px; height: 200px"
                   :src="baseAPI + img.frame_path"
@@ -46,15 +46,24 @@
       title="预览"
       :visible.sync="drawer"
       :with-header="false"
-      direction="rtl">
+      :modal="false"
+      size="700px"
+      direction="rtl"
+    >
       <!-- <el-image
         style="width: 200px; height: 200px"
         :src="paly_frame_path"
         fit="contain"
       /> -->
-      <div style="width: 350px; height: 350px; display: inline-block;">
-        <img :src="paly_frame_path" style="object-fit: contain;width: 100%; height: 100%;">
+      <canvas id="video" width="640" height="480" />
+      <div>
+        当前帧:{{ curFrameIndex }}
+        <i v-show="btnStatus === 0" class="el-icon-video-play" @click="partPlay()" />
+        <i v-show="btnStatus === 1" class="el-icon-video-pause" @click="partPause()" />
       </div>
+      <!-- <div style="width: 350px; height: 350px; display: inline-block;">
+        <img :src="paly_frame_path" style="object-fit: contain;width: 100%; height: 100%;">
+      </div> -->
     </el-drawer>
   </div>
 </template>
@@ -101,6 +110,7 @@ export default {
     return {
       reultInfo: {},
       activeTemplateId: null,
+      activeReid: null,
       templateList: [],
       activeVideoId: null,
       videoList: [],
@@ -111,30 +121,42 @@ export default {
       drawer: false,
       canvasWidth: 300,
       canvasBox: null,
-      paly_frame_path: null
+      paly_frame_path: null,
+      curFrameIndex: 0,
+      btnStatus: 0
     }
   },
   created() {
-    // this.parts = getParts()
-    // console.log(this.parts)
-    // this.templateList = this.parts.match_task_detail
-    // this.activeTemplateId = this.templateList[0].action_id + ''
-    // this.videoList = this.templateList[0].video_list
-    // this.activeVideoId = this.videoList[0].video_id + ''
-    // this.getMatchResult()
     this.task_match_id = this.$route.query.task_match_id
     this.getMatchSecond()
   },
   mounted() {
-    // this.imgPoolMap = new ImagePool(10)
-    this.$socket.on('preview_key_frame', res => {
+    this.imgPoolMap = new ImagePool(10)
+    this.$socket.on('key_people_response', (res) => {
       if (res.code === 0) {
-        this.paly_frame_path = res.data.frame_path
-        // this.renderVideo(this.canvasBox, res.data)
+        this.curFrameIndex = res.data.frame_index
+        this.renderVideo(this.canvasBox, res.data)
       } else {
         this.$message.error(res.message)
       }
     })
+    this.$socket.on('play_msg', (res) => {
+      this.playStatus = res.code
+      if (res.code === 0) {
+        this.task_id = res.data.task_id
+      }
+      if (this.playStatus === 1) {
+        this.btnStatus = 0
+      }
+    })
+    // this.$socket.on('preview_key_frame', res => {
+    //   if (res.code === 0) {
+    //     this.paly_frame_path = res.data.frame_path
+    //     // this.renderVideo(this.canvasBox, res.data)
+    //   } else {
+    //     this.$message.error(res.message)
+    //   }
+    // })
   },
   beforeDestroy() {
     this.$socket.removeListener('preview_key_frame')
@@ -148,6 +170,7 @@ export default {
           this.reultInfo = response.data
           this.templateList = this.reultInfo.match_task_detail
           this.activeTemplateId = this.templateList[0].id + ''
+          this.activeReid = this.templateList[0].reid
           this.videoList = this.templateList[0].video_list
           this.activeVideoId = this.videoList[0].video_id + ''
           this.getMatchTaskDetail()
@@ -156,6 +179,7 @@ export default {
     },
     templateChange(template) {
       this.activeTemplateId = this.templateList[template.index].id + ''
+      this.activeReid = this.templateList[template.index].reid
       this.videoList = this.templateList[template.index].video_list
       this.activeVideoId = this.videoList[0].video_id + ''
       this.getMatchTaskDetail()
@@ -179,17 +203,26 @@ export default {
     },
     playVideo(frameList) {
       this.drawer = true
-      // this.canvasBox = document.getElementById('video').getContext('2d')
-
-      this.$socket.emit('preview_frame', {
-        'start_frame_index': _.first(frameList).frame_id,
-        'end_frame_index': _.last(frameList).frame_id,
-        'video_id': parseInt(this.activeVideoId)
+      this.start_frame_index = _.first(frameList).frame_id
+      this.end_frame_index = _.last(frameList).frame_id
+      this.btnStatus = 1
+      this.$nextTick(() => {
+        this.canvasBox = document.getElementById('video').getContext('2d')
+        this.$socket.emit('play', {
+          'video_id': this.activeVideoId,
+          'reid': this.activeReid,
+          'start_frame_index': this.start_frame_index,
+          'end_frame_index': this.end_frame_index
+        })
+        // this.$socket.emit('preview_frame', {
+        //   'start_frame_index': _.first(frameList).frame_id,
+        //   'end_frame_index': _.last(frameList).frame_id,
+        //   'video_id': parseInt(this.activeVideoId)
+        // })
       })
     },
     renderVideo(ctx, data) {
-      console.info(data)
-      const blob = new Blob([data.frame_path], { type: 'image/jpeg' })
+      const blob = new Blob([data.image], { type: 'image/jpeg' })
       let url = window.URL.createObjectURL(blob)
 
       let img = this.imgPoolMap.next()
@@ -208,6 +241,24 @@ export default {
         URL.revokeObjectURL(url)
         url = null
       }
+    },
+    partPlay() {
+      this.btnStatus = 1
+      if (this.playStatus === 1) {
+        this.curFrameIndex = this.start_frame_index
+      }
+      this.$socket.emit('play', {
+        'video_id': this.activeVideoId,
+        'reid': this.activeReid,
+        'start_frame_index': this.curFrameIndex,
+        'end_frame_index': this.end_frame_index
+      })
+    },
+    partPause() {
+      this.btnStatus = 0
+      this.$socket.emit('pause', {
+        task_id: this.task_id
+      })
     }
   }
 }
@@ -234,6 +285,12 @@ export default {
     font-size: 20px;
     line-height: 28px;
     color: #409EFF;
+    cursor: pointer;
+  }
+  .el-icon-video-pause{
+    font-size: 20px;
+    line-height: 28px;
+    color: #F56C6C;
     cursor: pointer;
   }
   .loading-div{
@@ -294,7 +351,6 @@ export default {
     display: block;
   }
 }
-
 
 </style>
 

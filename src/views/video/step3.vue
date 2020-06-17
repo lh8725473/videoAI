@@ -1,5 +1,11 @@
 <template>
   <div class="app-container">
+    <el-image
+      ref="elImage"
+      style="width: 0; height: 0"
+      :src="srcUrl"
+      :preview-src-list="srcList"
+    />
     <el-button size="medium" type="primary" style="position:absolute;right: 245px;top: 20px; z-index: 2;" @click="getKeyFrames(0)">还原系统结果</el-button>
     <el-button size="medium" type="primary" style="position:absolute;right: 120px;top: 20px; z-index: 2;" @click="keyframeSave()">保存关键帧</el-button>
     <el-button size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="nextStep()">下一步</el-button>
@@ -10,6 +16,7 @@
       <el-collapse-item v-for="part in parts" :key="part.id" :name="part.id">
         <template slot="title">
           {{ part.name }} (已经选取关键帧，共{{ part.key_frame.length }}张)
+          <el-button size="mini" type="primary" @click="previewKeyFrame(part.key_frame)">预览关键帧</el-button>
         </template>
         <div class="key_frame">
           <draggable
@@ -80,6 +87,8 @@ export default {
   data() {
     return {
       stringdsad: '人物重心',
+      srcUrl: '',
+      srcList: [],
       baseAPI: process.env.VUE_APP_BASE_API,
       canvasWidth: 300,
       peoples: [],
@@ -234,6 +243,16 @@ export default {
       this.cruPartId = part.id
       const cruPart = _.find(this.parts, { id: this.cruPartId })
       cruPart.previewParts = []
+    },
+    previewKeyFrame(key_frame_list) {
+      console.log(key_frame_list)
+      this.srcList = []
+      this.srcUrl = key_frame_list[0].full_frame_path
+      _.forEach(key_frame_list, (key_frame) => {
+        this.srcList.push(key_frame.full_frame_path)
+      })
+      console.log(this.srcList)
+      this.$refs.elImage.showViewer = true
     }
   }
 }

@@ -1,7 +1,8 @@
 <template>
   <div class="app-container step2">
     <el-row>
-      <el-col :span="12">
+      <el-col :span="12" class="current-frame-index-div">
+        <div class="current-frame-index"> 当前帧数: {{ currentFrameIndex }}</div>
         <video ref="video" width="100%" height="480" :src="baseAPI + videoInfo.path" controls="controls">
           your browser does not support the video tag
         </video>
@@ -24,15 +25,15 @@
           <el-col :offset="1" :span="7">时间段(秒)</el-col>
         </el-row>
         <draggable
-            v-model="part.key_frame"
-            :group="{ name: 'people'}"
-            ghost-class="ghost"
-            handle=".el-icon-sort"
-          >
+          v-model="part.key_frame"
+          :group="{ name: 'people'}"
+          ghost-class="ghost"
+          handle=".el-icon-sort"
+        >
           <el-row v-for="(item, index) in part" :key="index">
             <el-col v-show="isEdit" :span="6">
               <el-col :span="8" style="line-height: 28px;">
-                <i class="el-icon-sort"/>
+                <i class="el-icon-sort" />
                 <el-checkbox v-model="item.checked" @change="checkedChange" />
               </el-col>
               <el-col :span="16">
@@ -40,19 +41,20 @@
               </el-col>
             </el-col>
             <el-col v-show="!isEdit" :span="6">
-              <el-input v-model="item.name" size="mini"  disabled/>
+              <el-input v-model="item.name" size="mini" disabled />
             </el-col>
             <el-col :offset="1" :span="3">
-              <el-input v-model="item.start_frame_index" size="mini" :disabled="!isEdit"/>
+              <el-input v-model="item.start_frame_index" size="mini" :disabled="!isEdit" />
             </el-col>
             <el-col :offset="1" :span="3">
-              <el-input v-model="item.end_frame_index" size="mini" :disabled="!isEdit"/>
+              <el-input v-model="item.end_frame_index" size="mini" :disabled="!isEdit" />
             </el-col>
             <el-col :offset="1" :span="7" style="line-height: 28px;">
               {{ item.start_time | timeFilter(item, fps) }}
             </el-col>
             <el-col :offset="1" :span="1">
               <i class="el-icon-video-play" @click="playVideo(item)" />
+              <!-- <i class="el-icon-video-pause" @click="pauseVideo(item)" /> -->
             </el-col>
           </el-row>
         </draggable>
@@ -154,8 +156,12 @@ export default {
       return operationText[fun]
     },
     timeFilter(start_time, item, fps) {
-      const srartString = item.start_frame_index === 1 ? 0 : (item.start_frame_index / fps).toFixed(2)
-      return srartString + '至' + (item.end_frame_index / fps).toFixed(2) + '(共' + (item.end_frame_index / fps - item.start_frame_index / fps).toFixed(2) + ')'
+      if (item.start_frame_index === 1) {
+        return 0 + '至' + (item.end_frame_index / fps).toFixed(2) + '(共' + (item.end_frame_index / fps - 0).toFixed(2) + ')'
+      } else {
+        const srartString = item.start_frame_index === 1 ? 0 : (item.start_frame_index / fps).toFixed(2)
+        return srartString + '至' + (item.end_frame_index / fps).toFixed(2) + '(共' + (item.end_frame_index / fps - item.start_frame_index / fps).toFixed(2) + ')'
+      }
     }
   },
   data() {
@@ -177,7 +183,8 @@ export default {
       btnsDis: {
         delete: false,
         merge: false
-      }
+      },
+      currentFrameIndex: 1
     }
   },
   created() {
@@ -203,6 +210,13 @@ export default {
         this.fps = this.taskInfo.fps
       }
     })
+  },
+  mounted() {
+    const videoDom = this.$refs.video
+    var fun = () => {
+      this.currentFrameIndex = (videoDom.currentTime * this.fps).toFixed(0)
+    }
+    videoDom.addEventListener('timeupdate', fun)
   },
   methods: {
     getVideoInfo() {
@@ -246,7 +260,7 @@ export default {
       const videoDom = this.$refs.video
       const start = (item.start_frame_index / this.fps)
       const end = (item.end_frame_index / this.fps)
-      var fun = function() {
+      var fun = () => {
         if (videoDom.currentTime >= end) {
           videoDom.pause()
           videoDom.removeEventListener('timeupdate', fun)
@@ -255,6 +269,10 @@ export default {
       videoDom.currentTime = start
       videoDom.addEventListener('timeupdate', fun)
       videoDom.play()
+    },
+    pauseVideo() {
+      const videoDom = this.$refs.video
+      videoDom.pause()
     },
     onSubmit() {
       this.$message('submit!')
@@ -325,6 +343,17 @@ export default {
 
 <style lang="scss">
 .step2{
+  .current-frame-index-div{
+    position: relative;
+    background-color: #333333;
+  }
+  .current-frame-index{
+    font-size: 20px;
+    color: #F56C6C;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+  }
   .line{
     text-align: center;
   }

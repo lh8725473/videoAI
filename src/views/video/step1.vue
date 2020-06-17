@@ -13,10 +13,11 @@
             reid:
           </el-col>
           <el-col :offset="1" :span="10">
-            {{part.reid}}
+            {{ part.reid }}
           </el-col>
           <el-col :offset="1" :span="2">
-            <i class="el-icon-video-play" @click="playVideo()" />
+            <i v-show="btnStatus === 0" class="el-icon-video-play" @click="playVideo()" />
+            <i v-show="btnStatus === 1" class="el-icon-video-pause" @click="pauseVideo()" />
           </el-col>
         </el-row>
         <el-row>
@@ -45,7 +46,8 @@
         <el-image
           style="width: 200px; height: 200px"
           :src="url"
-          fit="contain"></el-image>
+          fit="contain"
+        />
         <el-row>
           <el-col :span="12">
             <el-button size="medium" type="warning" @click="updatePeople()">保    存</el-button>
@@ -142,7 +144,9 @@ export default {
       formInline: {
         curFrameIndex: 1,
         step: 1
-      }
+      },
+      playStatus: 0,
+      btnStatus: 0
     }
   },
   created() {
@@ -173,6 +177,15 @@ export default {
         this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
       }
     })
+    this.$socket.on('play_msg', (res) => {
+      this.playStatus = res.code
+      if (res.code === 0) {
+        this.task_id = res.data.task_id
+      }
+      if (this.playStatus === 1) {
+        this.btnStatus = 0
+      }
+    })
 
     this.$socket.emit('show_frame', {
       'task_id': this.task_id,
@@ -180,62 +193,6 @@ export default {
       'reid': this.activePeople,
       'frame_index': parseInt(this.formInline.curFrameIndex)
     })
-    // var canvas = new fabric.Canvas('canvas')
-
-    // var rect = new fabric.Rect({
-    //   top: 100,
-    //   left: 100,
-    //   width: 60,
-    //   height: 70,
-    //   strokeWidth: 2,
-    //   stroke: '#880E4F',
-    //   fill: 'rgba(255,0,0,0)',
-    //   hasControls: false,
-    //   // evented: false
-    //   lockMovementX: true,
-    //   lockMovementY: true
-    // })
-
-    // console.log(rect)
-    // function objMousedown(a) {
-    //   console.log(a)
-    // }
-
-    // canvas.add(rect)
-    // // setTimeout(() => {
-    // //   canvas.remove(rect)
-    // // }, 5000)
-    // rect.on({
-    //   'mousedown': objMousedown
-    // })
-
-    // var mouseDownPoint = {}
-
-    // function mouseDown(e) {
-    //   console.log(e)
-    //   mouseDownPoint = e.pointer
-    // }
-    // function mouseUp(e) {
-    //   console.log(e)
-    //   var tempRect = new fabric.Rect({
-    //     top: mouseDownPoint.y,
-    //     left: mouseDownPoint.x,
-    //     width: e.pointer.x - mouseDownPoint.x,
-    //     height: e.pointer.y - mouseDownPoint.y,
-    //     strokeWidth: 2,
-    //     stroke: '#880E4F',
-    //     fill: 'rgba(255,0,0,0)'
-    //   })
-    //   console.log(tempRect)
-    //   canvas.add(tempRect)
-    // }
-    // setInterval(() => {
-    //   console.log(canvas.getActiveObject())
-    // }, 5000)
-    // // canvas.on({
-    // //   'mouse:down': mouseDown,
-    // //   'mouse:up': mouseUp
-    // // })
   },
   methods: {
     renderVideo(ctx, data) {
@@ -277,10 +234,22 @@ export default {
       this.url = process.env.VUE_APP_BASE_API + this.result[tab.index].reid_path
     },
     playVideo() {
+      console.log(this.playStatus)
+      this.btnStatus = 1
+      if (this.playStatus === 1) {
+        this.formInline.curFrameIndex = 1
+      }
       this.$socket.emit('play', {
         'step': parseInt(this.formInline.step),
         'video_id': this.video_id,
-        'reid': this.activePeople
+        'reid': this.activePeople,
+        'start_frame_index': this.formInline.curFrameIndex
+      })
+    },
+    pauseVideo() {
+      this.btnStatus = 0
+      this.$socket.emit('pause', {
+        task_id: this.task_id
       })
     },
     preFrameIndex() {
@@ -344,6 +313,12 @@ export default {
   font-size: 20px;
   line-height: 28px;
   color: #409EFF;
+  cursor: pointer;
+}
+.el-icon-video-pause{
+  font-size: 20px;
+  line-height: 28px;
+  color: #F56C6C;
   cursor: pointer;
 }
 .loading-div{

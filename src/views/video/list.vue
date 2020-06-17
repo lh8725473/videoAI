@@ -19,9 +19,15 @@
       fit
       highlight-current-row
     >
-      <el-table-column label="视频名称">
+      <el-table-column label="视频名称" width="200">
         <template slot-scope="scope">
-          {{ scope.row.video_name }}
+          <el-link v-show="scope.row.status == '2'" type="primary" :href="'#/video/step1?video_id=' + scope.row.id">{{ scope.row.video_name }}</el-link>
+          <span v-show="scope.row.status != '2'">{{ scope.row.video_name }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="分析状态" width="110" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.status | statusFilter }}
         </template>
       </el-table-column>
       <el-table-column label="视频大小" width="110">
@@ -85,7 +91,7 @@
         width="100"
       >
         <template slot-scope="scope">
-          <el-button type="text" size="small" @click="preClassify(scope.row)">视频分析</el-button>
+          <el-button type="text" size="small" :disabled="scope.row.status != '0' && scope.row.status != '-100'" @click="basicData(scope.row)">视频分析</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -101,15 +107,18 @@
 </template>
 
 <script>
-import { getVideoList, preClassify, postKeyPeople } from '@/api/video'
+import { getVideoList, preClassify, postKeyPeople, basicData } from '@/api/video'
+import _ from 'lodash'
 
 export default {
   filters: {
     statusFilter(status) {
       const statusMap = {
-        published: 'success',
-        draft: 'gray',
-        deleted: 'danger'
+        '0': '未开始',
+        '1': '检测中',
+        '2': '结束',
+        '10': '等待中',
+        '-100': '异常'
       }
       return statusMap[status]
     },
@@ -136,6 +145,14 @@ export default {
   },
   created() {
     this.fetchData()
+    this.$socket.on('video_task', (res) => {
+      if (res.code === 0) {
+        const video = _.find(this.list, { id: res.data.id })
+        if (video) {
+          video.status = res.data.status
+        }
+      }
+    })
   },
   methods: {
     fetchData() {
@@ -145,6 +162,16 @@ export default {
         this.list = response.data
         this.total = response.page_info.total
         this.listLoading = false
+      })
+    },
+    basicData(video) {
+      basicData({
+        video_id: video.id
+      }).then(response => {
+        console.log(response)
+        if (response.code === 0) {
+          // this.$router.push('/video/step1?video_id=' + video.id)
+        }
       })
     },
     preClassify(video) {

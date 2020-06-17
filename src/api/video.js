@@ -191,3 +191,11 @@ export function archive(data) {
     data
   })
 }
+
+export function basicData(data) {
+  return request({
+    url: '/video/basic_data',
+    method: 'post',
+    data
+  })
+}
