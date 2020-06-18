@@ -16,7 +16,7 @@
         </template>
         <el-row>
           <div class="scroll-warp">
-            <p>模版 <i class="el-icon-video-play" @click="playVideo(part.template_frame_list)" /></p>
+            <p>模版 <i class="el-icon-video-play" @click="previewVideo(part)" /></p>
             <div v-for="img in part.template_frame_list" :key="img.frame_id" class="block">
               <el-image
                 style="width: 200px; height: 200px"
@@ -26,14 +26,20 @@
               <span class="demonstration">帧号：{{ img.frame_id }} </span>
             </div>
             <template v-for="(match_frame, index) in part.match_frame_list">
-              <p>匹配{{ index + 1 }} <i class="el-icon-video-play" @click="playVideo(match_frame)" /></p>
-              <div v-for="(img, imgIndex) in match_frame" :key="imgIndex" class="block">
+              <p>匹配{{ index + 1 }} <i class="el-icon-video-play" @click="previewVideo(match_frame)" /></p>
+              <div v-for="(img, imgIndex) in match_frame.data" :key="imgIndex" class="block">
                 <el-image
                   style="width: 200px; height: 200px"
                   :src="baseAPI + img.frame_path"
                   fit="contain"
                 />
                 <span class="demonstration">帧号：{{ img.frame_id }} </span>
+                <el-row>
+                  <el-col :span="12">帧间距: {{ img.frame_distance }}</el-col>
+                  <el-col :span="12">帧间事件: {{ img.frame_time }}s</el-col>
+                  <el-col :span="12">帧间分数: {{ img.interframe_value }}</el-col>
+                  <el-col :span="12">相似率: {{ (img.match_rate * 100).toFixed(2) }}%</el-col>
+                </el-row>
               </div>
             </template>
 
@@ -55,12 +61,18 @@
         :src="paly_frame_path"
         fit="contain"
       /> -->
-      <canvas id="video" width="640" height="480" />
+      <!-- <canvas id="video" width="640" height="480" />
       <div>
         当前帧:{{ curFrameIndex }}
         <i v-show="btnStatus === 0" class="el-icon-video-play" @click="partPlay()" />
         <i v-show="btnStatus === 1" class="el-icon-video-pause" @click="partPause()" />
-      </div>
+      </div> -->
+      <el-col :span="24" class="current-frame-index-div">
+        <div class="current-frame-index"> 当前帧数: {{ currentFrameIndex }}</div>
+        <video ref="video" width="100%" height="480" :src="baseAPI + videoInfo.path" controls="controls">
+          your browser does not support the video tag
+        </video>
+      </el-col>
       <!-- <div style="width: 350px; height: 350px; display: inline-block;">
         <img :src="paly_frame_path" style="object-fit: contain;width: 100%; height: 100%;">
       </div> -->
@@ -72,6 +84,7 @@
 import { getParts, setParts } from './parts.vm'
 import _ from 'lodash'
 import { getMatchResult, getMatchSecond, getMatchTaskDetail } from '@/api/templates'
+import { getVideoInfo } from '@/api/video'
 
 function ImagePool(size) {
   this.size = size
@@ -123,7 +136,10 @@ export default {
       canvasBox: null,
       paly_frame_path: null,
       curFrameIndex: 0,
-      btnStatus: 0
+      btnStatus: 0,
+      videoInfo: {},
+      currentFrameIndex: 1,
+      loading: null
     }
   },
   created() {
@@ -149,6 +165,13 @@ export default {
         this.btnStatus = 0
       }
     })
+    this.$socket.on('template_match', (res) => {
+      console.log(res)
+      if (res.task_match_status === '2') {
+        this.loading.close()
+        this.getMatchSecond()
+      }
+    })
     // this.$socket.on('preview_key_frame', res => {
     //   if (res.code === 0) {
     //     this.paly_frame_path = res.data.frame_path
@@ -167,14 +190,30 @@ export default {
         task_match_id: this.task_match_id
       }).then(response => {
         if (response.code === 0) {
-          this.reultInfo = response.data
-          this.templateList = this.reultInfo.match_task_detail
-          this.activeTemplateId = this.templateList[0].id + ''
-          this.activeReid = this.templateList[0].reid
-          this.videoList = this.templateList[0].video_list
-          this.activeVideoId = this.videoList[0].video_id + ''
-          this.getMatchTaskDetail()
+          console.log(response)
+          if (response.data.task_match_status !== '2') {
+            this.loading = this.$loading({
+              fullscreen: true,
+              text: '匹配结果生成中...'
+            })
+          } else {
+            this.reultInfo = response.data
+            this.templateList = this.reultInfo.match_task_detail
+            this.activeTemplateId = this.templateList[0].id + ''
+            this.activeReid = this.templateList[0].reid
+            this.videoList = this.templateList[0].video_list
+            this.activeVideoId = this.videoList[0].video_id + ''
+            this.getVideoInfo()
+            this.getMatchTaskDetail()
+          }
         }
+      })
+    },
+    getVideoInfo() {
+      getVideoInfo({
+        video_id: parseInt(this.activeVideoId)
+      }).then(response => {
+        this.videoInfo = response.data
       })
     },
     templateChange(template) {
@@ -182,10 +221,12 @@ export default {
       this.activeReid = this.templateList[template.index].reid
       this.videoList = this.templateList[template.index].video_list
       this.activeVideoId = this.videoList[0].video_id + ''
+      this.getVideoInfo()
       this.getMatchTaskDetail()
     },
     videoChange(video) {
       this.activeVideoId = this.videoList[video.index].video_id + ''
+      this.getVideoInfo()
       this.getMatchTaskDetail()
     },
     getMatchTaskDetail() {
@@ -259,6 +300,27 @@ export default {
       this.$socket.emit('pause', {
         task_id: this.task_id
       })
+    },
+    previewVideo(part) {
+      console.log(part)
+      this.drawer = true
+      this.$nextTick(() => {
+        const videoDom = this.$refs.video
+        const start = part.template_start_time || part.start_time
+        const end = part.template_end_time || part.end_time
+        console.log(start)
+        console.log(end)
+        var fun = () => {
+          this.currentFrameIndex = (videoDom.currentTime * this.videoInfo.fps).toFixed(0)
+          if (videoDom.currentTime >= end) {
+            videoDom.pause()
+            videoDom.removeEventListener('timeupdate', fun)
+          }
+        }
+        videoDom.currentTime = start
+        videoDom.addEventListener('timeupdate', fun)
+        videoDom.play()
+      })
     }
   }
 }
@@ -266,6 +328,17 @@ export default {
 
 <style lang="scss">
 .mathResult{
+  .current-frame-index-div{
+    position: relative;
+    background-color: #333333;
+  }
+  .current-frame-index{
+    font-size: 20px;
+    color: #F56C6C;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+  }
   .el-drawer__body{
     text-align: center;
   }
@@ -320,7 +393,7 @@ export default {
     text-align: center;
     display: inline-block;
     width: 200px;
-    height: 230px;
+    height: 270px;
     box-sizing: border-box;
     margin-right: 10px;
   }

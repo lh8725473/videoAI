@@ -149,6 +149,18 @@ export const constantRoutes = [
       }
     ]
   },
+  {
+    path: '/task',
+    component: Layout,
+    children: [
+      {
+        path: 'list',
+        name: 'taskList',
+        component: () => import('@/views/templates/taskList'),
+        meta: { title: '任务列表', icon: 'nested' }
+      }
+    ]
+  },
 
   // {
   //   path: '/nested',

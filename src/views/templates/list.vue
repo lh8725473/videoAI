@@ -303,12 +303,13 @@ export default {
           video_id: _.map(this.selectedVideoList, 'id'),
           action_template_id: _.map(this.multipleSelection, 'id')
         }).then(response => {
-          setParts(response)
+          console.log(response)
+          // setParts(response)
           this.loading.close()
-          this.$router.push({ name: 'mathResult' })
+          this.$router.push('/templates/mathResult?task_match_id=' + response.data.task_match_id)
+          // this.$router.push({ name: 'mathResult' })
         })
       }).catch(() => {
-              
       })
     },
     addAction() {

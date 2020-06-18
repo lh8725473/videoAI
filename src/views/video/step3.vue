@@ -16,7 +16,13 @@
       <el-collapse-item v-for="part in parts" :key="part.id" :name="part.id">
         <template slot="title">
           {{ part.name }} (已经选取关键帧，共{{ part.key_frame.length }}张)
-          <el-button size="mini" type="primary" @click="previewKeyFrame(part.key_frame)">预览关键帧</el-button>
+          <span class="frame-range">帧数范围: {{ part.start_frame_index }}至{{ part.end_frame_index }}</span>
+          <el-tooltip class="item" effect="dark" content="预览关键帧" placement="top">
+            <i class="el-icon-picture" @click.stop="previewKeyFrame(part.key_frame)" />
+          </el-tooltip>
+          <el-tooltip class="item" effect="dark" content="预览原视频" placement="top">
+            <i class="el-icon-video-play" @click.stop="previewVideo(part)" />
+          </el-tooltip>
         </template>
         <div class="key_frame">
           <draggable
@@ -32,7 +38,13 @@
                 fit="contain"
                 @click="previewFrame(img, part)"
               />
-              <span class="demonstration">帧号：{{ img.frame_index }}</span>
+              <span class="demonstration">
+                帧号：{{ img.frame_index }}
+                <i class="el-icon-edit" @click.stop="editFrameDesc(img, part)" />
+                <el-tooltip class="item" effect="dark" :content="img.key_frame_desc" placement="top">
+                  <i v-show="img.key_frame_desc" class="el-icon-question" />
+                </el-tooltip>
+              </span>
             </div>
           </draggable>
         </div>
@@ -45,8 +57,8 @@
               帧
             </span>(前后各10帧)
             <el-button-group>
-              <el-button size="mini" type="primary" icon="el-icon-arrow-left" @click="previewPartsChange(part, -1)">上一页</el-button>
-              <el-button size="mini" type="primary" @click="previewPartsChange(part, 1)">下一页<i class="el-icon-arrow-right el-icon--right" /></el-button>
+              <el-button size="mini" type="primary" icon="el-icon-arrow-left" @click="previewPartsChange(part, -2)">上一页</el-button>
+              <el-button size="mini" type="primary" @click="previewPartsChange(part, 2)">下一页<i class="el-icon-arrow-right el-icon--right" /></el-button>
             </el-button-group>
           </el-row>
           <draggable
@@ -66,12 +78,40 @@
         </div>
       </el-collapse-item>
     </el-collapse>
+
+    <el-dialog :title="dialogFormtitle" :visible.sync="dialogFormVisible">
+      <el-form :model="frameDesForm">
+        <el-form-item label="关键帧描述">
+          <el-input v-model="frameDesForm.key_frame_desc" type="textarea" :autosize="{ minRows: 3, maxRows: 5}" autocomplete="off" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="updateKeyframeDesc()">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <el-drawer
+      title="预览"
+      :visible.sync="drawer"
+      :with-header="false"
+      :modal="false"
+      size="700px"
+      direction="rtl"
+    >
+      <el-col :span="24" class="current-frame-index-div">
+        <div class="current-frame-index"> 当前帧数: {{ currentFrameIndex }}</div>
+        <video ref="video" width="100%" height="480" :src="baseAPI + videoInfo.path" controls="controls">
+          your browser does not support the video tag
+        </video>
+      </el-col>
+    </el-drawer>
   </div>
 </template>
 
 <script>
 import { Sortable, Swap } from 'sortablejs/modular/sortable.core.esm'
-import { getKeyFrames, getImageFeature, createTemplate, keyframeSave } from '@/api/video'
+import { getKeyFrames, getImageFeature, createTemplate, keyframeSave, getVideoInfo, updateKeyframeDesc } from '@/api/video'
 import { fabric } from 'fabric'
 import draggable from 'vuedraggable'
 import _ from 'lodash'
@@ -105,12 +145,20 @@ export default {
         curFrameIndex: 1,
         step: 1
       },
-      activePart: []
+      activePart: [],
+      drawer: false,
+      currentFrameIndex: 0,
+      dialogFormVisible: false,
+      dialogFormtitle: '关键帧说明',
+      frameDesForm: {
+        key_frame_desc: ''
+      }
     }
   },
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
+    this.getVideoInfo()
     this.getKeyFrames()
     let people = {}
     let part = {}
@@ -133,6 +181,13 @@ export default {
     this.$socket.removeListener('preview_key_frame')
   },
   methods: {
+    getVideoInfo() {
+      getVideoInfo({
+        video_id: this.video_id
+      }).then(response => {
+        this.videoInfo = response.data
+      })
+    },
     getKeyFrames(operation_type) {
       getKeyFrames({
         video_id: this.video_id,
@@ -253,12 +308,84 @@ export default {
       })
       console.log(this.srcList)
       this.$refs.elImage.showViewer = true
+    },
+    previewVideo(part) {
+      this.drawer = true
+      this.$nextTick(() => {
+        const videoDom = this.$refs.video
+        const start = part.start_time
+        const end = part.end_time
+        var fun = () => {
+          this.currentFrameIndex = (videoDom.currentTime * this.videoInfo.fps).toFixed(0)
+          if (videoDom.currentTime >= end) {
+            videoDom.pause()
+            videoDom.removeEventListener('timeupdate', fun)
+          }
+        }
+        videoDom.currentTime = start
+        videoDom.addEventListener('timeupdate', fun)
+        videoDom.play()
+      })
+    },
+    editFrameDesc(frame, part) {
+      this.editDescCurFrame = frame
+      this.dialogFormtitle = frame.frame_index + '帧说明'
+      this.dialogFormVisible = true
+      this.frameDesForm.key_frame_desc = frame.key_frame_desc
+    },
+    updateKeyframeDesc() {
+      updateKeyframeDesc({
+        video_id: this.video_id,
+        task_id: this.task_id,
+        frame_index: this.editDescCurFrame.frame_index,
+        desc: this.frameDesForm.key_frame_desc
+      }).then(response => {
+        this.dialogFormVisible = false
+        this.editDescCurFrame.key_frame_desc = this.frameDesForm.key_frame_desc
+      })
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+.el-icon-edit{
+  cursor: pointer;
+  &:hover{
+    color: #409EFF;
+  }
+}
+.el-icon-question{
+  cursor: pointer;
+  &:hover{
+    color: #409EFF;
+  }
+}
+.current-frame-index-div{
+  position: relative;
+  background-color: #333333;
+}
+.current-frame-index{
+  font-size: 20px;
+  color: #F56C6C;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+.frame-range{
+  margin-left: 10px;
+}
+.el-icon-picture{
+  margin-left: 10px;
+  font-size: 20px;
+  color: #409EFF;
+}
+.el-icon-video-play{
+  margin-left: 10px;
+  font-size: 20px;
+  color: #409EFF;
+}
+
 .line{
   text-align: center;
 }

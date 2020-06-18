@@ -199,3 +199,19 @@ export function basicData(data) {
     data
   })
 }
+
+export function updateKeyframeDesc(data) {
+  return request({
+    url: '/keyframe/update_keyframe_desc',
+    method: 'post',
+    data
+  })
+}
+
+export function taskList(params) {
+  return request({
+    url: '/task/task_list',
+    method: 'get',
+    params
+  })
+}
