@@ -215,3 +215,28 @@ export function taskList(params) {
     params
   })
 }
+
+export function keyPeopleLatestFrame(data) {
+  return request({
+    url: '/keypeople/latest_frame',
+    method: 'post',
+    data
+  })
+}
+
+export function keypeopleGetFrame(data) {
+  return request({
+    url: '/keypeople/get_frame',
+    method: 'post',
+    data
+  })
+}
+
+export function keypeopleUpdateFrame(data) {
+  return request({
+    url: '/keypeople/update_frame',
+    method: 'post',
+    data
+  })
+}
+

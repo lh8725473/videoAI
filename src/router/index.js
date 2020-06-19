@@ -92,7 +92,7 @@ export const constantRoutes = [
         path: 'step1',
         name: 'step1',
         component: () => import('@/views/video/step1'),
-        meta: { title: '人物轨迹跟踪', icon: 'form' }
+        meta: { title: '轨迹跟踪', icon: 'form' }
       },
       {
         path: 'step2',

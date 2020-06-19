@@ -49,8 +49,10 @@
           fit="contain"
         />
         <el-row>
-          <el-col :span="12">
-            <el-button size="medium" type="warning" @click="updatePeople()">保    存</el-button>
+          <el-col :span="24">
+            <el-button size="medium" type="warning" @click="updatePeople()">保 存</el-button>
+            <el-button v-show="!isEdit" size="medium" type="primary" @click="editPeopleFrame()">编 辑</el-button>
+            <el-button v-show="isEdit" size="medium" type="primary" @click="isEdit = false">退出编辑</el-button>
           </el-col>
         </el-row>
       </el-col>
@@ -81,12 +83,18 @@
         <el-button type="primary" @click="preClassify()">下一步</el-button>
       </el-form-item>
     </el-form>
+    <el-radio-group v-show="isEdit" v-model="mot_manual.index" size="small" @change="changeMotManual">
+      <el-radio v-for="(peopleFrame, index) in peopleFrameList" :key="index" :label="index" border>
+        <span :style="styleObject(peopleFrame)">TRACKER_ID:{{ peopleFrame.NO }} & RE_ID:{{ peopleFrame.NO2 }}</span>
+      </el-radio>
+    </el-radio-group>
+
     <!-- <canvas id="canvas" width="300" height="300" /> -->
   </div>
 </template>
 
 <script>
-import { getKeyPeople, getPeoples, updatePeople, preClassify } from '@/api/video'
+import { getKeyPeople, getPeoples, updatePeople, preClassify, keyPeopleLatestFrame, keypeopleGetFrame, keypeopleUpdateFrame } from '@/api/video'
 import { fabric } from 'fabric'
 import _ from 'lodash'
 // const { fabric } = require('fabric')
@@ -146,7 +154,10 @@ export default {
         step: 1
       },
       playStatus: 0,
-      btnStatus: 0
+      btnStatus: 0,
+      mot_manual: {},
+      peopleFrameList: [],
+      isEdit: false
     }
   },
   created() {
@@ -196,7 +207,6 @@ export default {
   },
   methods: {
     renderVideo(ctx, data) {
-      console.info(data)
       const blob = new Blob([data.image], { type: 'image/jpeg' })
       let url = window.URL.createObjectURL(blob)
 
@@ -223,6 +233,7 @@ export default {
       }).then(response => {
         this.result = response.data
         this.activePeople = this.result[0].reid + ''
+        this.keyPeopleId = this.result[0].id
         this.part = this.result[0]
         this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
         // this.taskInfo = response.data
@@ -230,6 +241,7 @@ export default {
     },
     handleClick(tab) {
       this.activePeople = this.result[tab.index].reid + ''
+      this.keyPeopleId = this.result[tab.index].id
       this.part = this.result[tab.index]
       this.url = process.env.VUE_APP_BASE_API + this.result[tab.index].reid_path
     },
@@ -254,29 +266,59 @@ export default {
     },
     preFrameIndex() {
       this.formInline.curFrameIndex = parseInt(this.formInline.curFrameIndex) - parseInt(this.formInline.step)
-      this.$socket.emit('show_frame', {
-        'task_id': this.task_id,
-        'video_id': this.video_id,
-        'reid': this.activePeople,
-        'frame_index': parseInt(this.formInline.curFrameIndex)
-      })
+      // this.$socket.emit('show_frame', {
+      //   'task_id': this.task_id,
+      //   'video_id': this.video_id,
+      //   'reid': this.activePeople,
+      //   'frame_index': parseInt(this.formInline.curFrameIndex)
+      // })
+      if (this.isEdit) {
+        this.keypeopleGetFrame()
+      } else {
+        this.$socket.emit('show_frame', {
+          'task_id': this.task_id,
+          'video_id': this.video_id,
+          'reid': this.activePeople,
+          'frame_index': parseInt(this.formInline.curFrameIndex)
+        })
+      }
     },
     nextFrameIndex() {
       this.formInline.curFrameIndex = parseInt(this.formInline.curFrameIndex) + parseInt(this.formInline.step)
-      this.$socket.emit('show_frame', {
-        'task_id': this.task_id,
-        'video_id': this.video_id,
-        'reid': this.activePeople,
-        'frame_index': parseInt(this.formInline.curFrameIndex)
-      })
+      // this.$socket.emit('show_frame', {
+      //   'task_id': this.task_id,
+      //   'video_id': this.video_id,
+      //   'reid': this.activePeople,
+      //   'frame_index': parseInt(this.formInline.curFrameIndex)
+      // })
+      if (this.isEdit) {
+        this.keypeopleGetFrame()
+      } else {
+        this.$socket.emit('show_frame', {
+          'task_id': this.task_id,
+          'video_id': this.video_id,
+          'reid': this.activePeople,
+          'frame_index': parseInt(this.formInline.curFrameIndex)
+        })
+      }
     },
     goFrameIndex() {
-      this.$socket.emit('show_frame', {
-        'task_id': this.task_id,
-        'video_id': this.video_id,
-        'reid': this.activePeople,
-        'frame_index': parseInt(this.formInline.curFrameIndex)
-      })
+      // this.$socket.emit('show_frame', {
+      //   'task_id': this.task_id,
+      //   'video_id': this.video_id,
+      //   'reid': this.activePeople,
+      //   'frame_index': parseInt(this.formInline.curFrameIndex)
+      // })
+      if (this.isEdit) {
+        this.keypeopleGetFrame()
+      } else {
+        this.$socket.emit('show_frame', {
+          'task_id': this.task_id,
+          'video_id': this.video_id,
+          'reid': this.activePeople,
+          'frame_index': parseInt(this.formInline.curFrameIndex)
+        })
+      }
     },
     keyPeople() {
       this.$router.push('/video/step3?video_id=' + this.video_id + '&task_id=' + this.task_id)
@@ -297,6 +339,59 @@ export default {
           this.$router.push('/video/step2?video_id=' + this.video_id + '&task_id=' + response.data.task_id)
         }
       })
+    },
+    editPeopleFrame() {
+      this.isEdit = true
+      keyPeopleLatestFrame({
+        video_id: this.video_id,
+        key_people_id: this.keyPeopleId,
+        reid: this.activePeople
+      }).then(response => {
+        console.log(response)
+        this.keyPeopleLatestFrame = response.data
+        if (response.code === 0) {
+          keypeopleGetFrame({
+            reid: this.activePeople,
+            video_id: this.video_id,
+            mot_manual_id: response.data.mot_manual_id,
+            frame_index: response.data.frame_index
+          }).then(response => {
+            if (response.code === 0) {
+              this.mot_manual = response.data
+              this.peopleFrameList = response.data.pose
+            }
+          })
+        }
+      })
+    },
+    keypeopleGetFrame() {
+      keypeopleGetFrame({
+        reid: this.activePeople,
+        video_id: this.video_id,
+        mot_manual_id: keyPeopleLatestFrame.mot_manual_id,
+        frame_index: parseInt(this.formInline.curFrameIndex)
+      }).then(response => {
+        if (response.code === 0) {
+          this.mot_manual = response.data
+          this.peopleFrameList = response.data.pose
+        }
+      })
+    },
+    styleObject(item) {
+      return {
+        color: 'rgb(' + item.color[2] + ',' + item.color[1] + ',' + item.color[0] + ')'
+      }
+    },
+    changeMotManual() {
+      this.mot_manual.video_id = this.video_id
+      keypeopleUpdateFrame(this.mot_manual)
+        .then(response => {
+          console.log(response)
+          if (response.code === 0) {
+            // this.mot_manual = response.data
+            // this.peopleFrameList = response.data.pose
+          }
+        })
     }
   }
 }
