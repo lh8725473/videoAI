@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container video-list">
     <div class="action-butons">
       <el-upload
         class="upload-demo"
@@ -27,7 +27,7 @@
       </el-table-column>
       <el-table-column label="分析状态" width="110" align="center">
         <template slot-scope="scope">
-          {{ scope.row.status | statusFilter }}
+          <span :class="'status' + scope.row.status">{{ scope.row.status | statusFilter }}</span>
         </template>
       </el-table-column>
       <el-table-column label="视频大小" width="110">
@@ -198,11 +198,26 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.action-butons{
-  margin-bottom: 10px;
+.video-list{
+  .status1{
+    color: #409EFF
+  }
+  .status2{
+    color: #67C23A;
+  }
+  .status10{
+    color: #E6A23C;
+  }
+  .status-100{
+    color: #F56C6C;
+  }
+  .action-butons{
+    margin-bottom: 10px;
+  }
+  .el-pagination{
+    float: right;
+    margin-top: 15px;
+  }
 }
-.el-pagination{
-  float: right;
-  margin-top: 15px;
-}
+
 </style>

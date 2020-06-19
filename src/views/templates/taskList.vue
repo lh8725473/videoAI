@@ -34,27 +34,33 @@
           {{ scope.row.update_time }}
         </template>
       </el-table-column>
-      <el-table-column label="视频预分段" width="110" align="center">
+      <!-- <el-table-column label="视频预分段" width="110" align="center">
         <template slot-scope="scope">
           <el-link v-show="scope.row.step1 == '1' || scope.row.step1 == '2'" type="primary" :href="'#/video/step1?video_id=' + scope.row.id + '&task_id=' + scope.row.task_id">{{ scope.row.step1 | statusFilter }}</el-link>
           <span v-show="scope.row.step1 != '1' && scope.row.step1 != '2'">{{ scope.row.step1 | statusFilter }}</span>
         </template>
-      </el-table-column>
-      <el-table-column label="重点人物轨迹跟踪" width="140" align="center">
+      </el-table-column> -->
+      <el-table-column label="视频预分段" width="140" align="center">
         <template slot-scope="scope">
-          <el-link v-show="scope.row.step2 == '1' || scope.row.step2 == '2'" type="primary" :href="'#/video/step2?video_id=' + scope.row.id + '&task_id=' + scope.row.task_id">{{ scope.row.step2 | statusFilter }}</el-link>
-          <span v-show="scope.row.step2 != '1' && scope.row.step2 != '2'">{{ scope.row.step2 | statusFilter }}</span>
+          <el-link v-show="scope.row.step1 == '1' || scope.row.step1 == '2'" type="primary" :href="'#/video/step2?video_id=' + scope.row.video_id + '&task_id=' + scope.row.task_id">{{ scope.row.step1 | statusFilter }}</el-link>
+          <span v-show="scope.row.step1 != '1' && scope.row.step1 != '2'">{{ scope.row.step1 | statusFilter }}</span>
         </template>
       </el-table-column>
       <el-table-column label="关键帧提取" width="110" align="center">
         <template slot-scope="scope">
-          <el-link v-show="scope.row.step3 == '1' || scope.row.step3 == '2'" type="primary" :href="'#/video/step3?video_id=' + scope.row.id + '&task_id=' + scope.row.task_id">{{ scope.row.step3 | statusFilter }}</el-link>
-          <span v-show="scope.row.step3 != '1' && scope.row.step3 != '2'">{{ scope.row.step3 | statusFilter }}</span>
+          <el-link v-show="scope.row.step2 == '1' || scope.row.step2 == '2'" type="primary" :href="'#/video/step3?video_id=' + scope.row.video_id + '&task_id=' + scope.row.task_id">{{ scope.row.step2 | statusFilter }}</el-link>
+          <span v-show="scope.row.step2 != '1' && scope.row.step2 != '2'">{{ scope.row.step2 | statusFilter }}</span>
         </template>
       </el-table-column>
       <el-table-column label="模板提取" width="110" align="center">
         <template slot-scope="scope">
-          <el-link v-show="scope.row.step4 == '1' || scope.row.step4 == '2'" type="primary" :href="'#/video/step4?video_id=' + scope.row.id + '&task_id=' + scope.row.task_id">{{ scope.row.step4 | statusFilter }}</el-link>
+          <el-link v-show="scope.row.step3 == '1' || scope.row.step3 == '2'" type="primary" :href="'#/video/step4?video_id=' + scope.row.video_id + '&task_id=' + scope.row.task_id">{{ scope.row.step3 | statusFilter }}</el-link>
+          <span v-show="scope.row.step3 != '1' && scope.row.step3 != '2'">{{ scope.row.step3 | statusFilter }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="归档状态" width="110" align="center">
+        <template slot-scope="scope">
+          <el-link v-show="scope.row.step4 == '1' || scope.row.step4 == '2'" type="primary" :href="'#/video/step4?video_id=' + scope.row.video_id + '&task_id=' + scope.row.task_id">{{ scope.row.step4 | statusFilter }}</el-link>
           <span v-show="scope.row.step4 != '1' && scope.row.step4 != '2'">{{ scope.row.step4 | statusFilter }}</span>
         </template>
       </el-table-column>
