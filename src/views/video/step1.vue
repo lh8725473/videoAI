@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <el-row>
-      <el-col ref="canvasDiv" :span="16">
-        <canvas id="video" :width="canvasWidth" height="480" />
+      <el-col ref="canvasDiv" :span="16" style="height: 480px;">
+        <!-- <canvas id="video" :width="canvasWidth" height="480" /> -->
       </el-col>
       <el-col :offset="1" :span="6">
         <el-tabs v-model="activePeople" type="card" @tab-click="handleClick">
@@ -95,7 +95,8 @@
 
 <script>
 import { getKeyPeople, getPeoples, updatePeople, preClassify, keyPeopleLatestFrame, keypeopleGetFrame, keypeopleUpdateFrame } from '@/api/video'
-import { fabric } from 'fabric'
+// import { fabric } from 'fabric'
+import zrender from 'zrender'
 import _ from 'lodash'
 // const { fabric } = require('fabric')
 
@@ -141,6 +142,7 @@ export default {
     return {
       baseAPI: process.env.VUE_APP_BASE_API,
       canvasWidth: 300,
+      canvasHeight: 480,
       peoples: [],
       result: [],
       part: [],
@@ -157,25 +159,37 @@ export default {
       btnStatus: 0,
       mot_manual: {},
       peopleFrameList: [],
-      isEdit: false
+      isEdit: false,
+      curImg: null
     }
   },
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
     this.getPeoples()
+    console.log(zrender)
   },
   mounted() {
     // 设置canvasWidth
     console.log(this.$refs.canvasDiv.$el.clientWidth)
     this.canvasWidth = this.$refs.canvasDiv.$el.clientWidth
     this.imgPoolMap = new ImagePool(10)
-    var canvasBox = document.getElementById('video').getContext('2d')
+    this.zr = zrender.init(this.$refs.canvasDiv.$el)
+    // var canvasBox = document.getElementById('video').getContext('2d')
+    // this.$socket.on('key_people_response', (res) => {
+    //   if (res.code === 0) {
+    //     this.formInline.curFrameIndex = res.data.frame_index
+    //     console.log(res.data.frame_index)
+    //     this.renderVideo(canvasBox, res.data)
+    //   } else {
+    //     this.$message.error(res.message)
+    //   }
+    // })
     this.$socket.on('key_people_response', (res) => {
       if (res.code === 0) {
         this.formInline.curFrameIndex = res.data.frame_index
         console.log(res.data.frame_index)
-        this.renderVideo(canvasBox, res.data)
+        this.renderVideo(this.zr, res.data)
       } else {
         this.$message.error(res.message)
       }
@@ -184,6 +198,7 @@ export default {
       if (res.code === 0) {
         this.result = res.data
         this.activePeople = this.result[0].reid + ''
+        this.people_id = this.result[0].id + ''
         this.part = this.result[0]
         this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_path
       }
@@ -200,24 +215,95 @@ export default {
 
     this.$socket.emit('show_frame', {
       'task_id': this.task_id,
+      'key_people_id': this.people_id,
       'video_id': this.video_id,
       'reid': this.activePeople,
       'frame_index': parseInt(this.formInline.curFrameIndex)
     })
   },
   methods: {
-    renderVideo(ctx, data) {
+    // renderVideo(ctx, data) {
+    //   const blob = new Blob([data.image], { type: 'image/jpeg' })
+    //   let url = window.URL.createObjectURL(blob)
+
+    //   let img = this.imgPoolMap.next()
+    //   img.src = url
+    //   img.onload = () => {
+    //     ctx.drawImage(img, 0, 0, img.width, img.height)
+    //     img.onload = img.onerror = null
+    //     img.src = ''
+    //     img = null
+    //     URL.revokeObjectURL(url)
+    //   }
+    //   img.onerror = (err) => {
+    //     console.log(err)
+    //     img.onload = img.onerror = null
+    //     img = null
+    //     URL.revokeObjectURL(url)
+    //     url = null
+    //   }
+    // },
+    renderVideo(zr, data) {
+      this.curImg = data.image
       const blob = new Blob([data.image], { type: 'image/jpeg' })
       let url = window.URL.createObjectURL(blob)
+      console.log(url)
 
       let img = this.imgPoolMap.next()
       img.src = url
       img.onload = () => {
-        ctx.drawImage(img, 0, 0, img.width, img.height)
-        img.onload = img.onerror = null
-        img.src = ''
-        img = null
-        URL.revokeObjectURL(url)
+        var x = 0
+        var y = 0
+        var width = 0
+        var height = 0
+        if (img.width > img.height) { // 长方形
+          x = 0
+          width = this.canvasWidth
+          height = width / (img.width / img.height)
+          y = (480 - height) / 2
+        }
+        var image = new zrender.Image({
+          position: [1, 1],
+          scale: [1, 1],
+          style: {
+            x: x,
+            y: y,
+            image: url,
+            width: width,
+            height: height
+          }
+        })
+        zr.add(image)
+        var bbox = data.pose[data.index].bbox
+        var rectX = bbox[0] * (this.canvasWidth / img.width) + 2
+        var rectY = y + bbox[1] * ((this.canvasHeight - 2 * y) / img.height) + 2
+        var rectW = (bbox[2] - bbox[0]) * (this.canvasWidth / img.width)
+        var rectH = (bbox[3] - bbox[1]) * ((this.canvasHeight - 2 * y) / img.height)
+        var rect = new zrender.Rect({
+          style: {
+            fill: 'transparent',
+            stroke: 'red',
+            opacity: 1,
+            lineWidth: 2
+          },
+          shape: {
+            x: rectX,
+            y: rectY,
+            width: rectW,
+            height: rectH
+          }
+        })
+        zr.add(rect)
+        setTimeout(() => {
+          img.onload = img.onerror = null
+          img.src = ''
+          img = null
+          URL.revokeObjectURL(url)
+        }, 1000)
+        // img.onload = img.onerror = null
+        // img.src = ''
+        // img = null
+        // URL.revokeObjectURL(url)
       }
       img.onerror = (err) => {
         console.log(err)
@@ -273,10 +359,11 @@ export default {
       //   'frame_index': parseInt(this.formInline.curFrameIndex)
       // })
       if (this.isEdit) {
+        this.keypeopleUpdateFrame()
         this.keypeopleGetFrame()
       } else {
         this.$socket.emit('show_frame', {
-          'task_id': this.task_id,
+          'key_people_id': this.people_id,
           'video_id': this.video_id,
           'reid': this.activePeople,
           'frame_index': parseInt(this.formInline.curFrameIndex)
@@ -295,6 +382,7 @@ export default {
         this.keypeopleGetFrame()
       } else {
         this.$socket.emit('show_frame', {
+          'key_people_id': this.people_id,
           'task_id': this.task_id,
           'video_id': this.video_id,
           'reid': this.activePeople,
@@ -313,6 +401,7 @@ export default {
         this.keypeopleGetFrame()
       } else {
         this.$socket.emit('show_frame', {
+          'key_people_id': this.people_id,
           'task_id': this.task_id,
           'video_id': this.video_id,
           'reid': this.activePeople,
@@ -384,6 +473,21 @@ export default {
     },
     changeMotManual() {
       this.mot_manual.video_id = this.video_id
+      this.mot_manual.image = this.curImg
+      this.renderVideo(this.zr, this.mot_manual)
+      console.log(this.mot_manual)
+      keypeopleUpdateFrame(this.mot_manual)
+        .then(response => {
+          console.log(response)
+          if (response.code === 0) {
+            // this.mot_manual = response.data
+            // this.peopleFrameList = response.data.pose
+          }
+        })
+    },
+    keypeopleUpdateFrame() {
+      this.mot_manual.video_id = this.video_id
+      this.mot_manual.image = this.curImg
       keypeopleUpdateFrame(this.mot_manual)
         .then(response => {
           console.log(response)
