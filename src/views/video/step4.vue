@@ -35,6 +35,7 @@
                   <span>人物重心坐标:{{ imgDetail.features.gravity_center }} </span>
                   <el-button size="mini" type="primary" @click="resetData(imgDetail, part)">还原系统结果</el-button>
                 </div>
+                <div>关键帧描述: {{imgDetail.key_frame_desc}}</div>
               </el-col>
               <el-col v-if="imgDetail.features" :span="12">
                 <el-tabs v-model="stringdsad" type="card">

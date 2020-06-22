@@ -1,7 +1,7 @@
 <template>
   <div class="app-container video-list">
     <div class="action-butons">
-      <el-upload
+      <!-- <el-upload
         class="upload-demo"
         :action="uploadUrl"
         :show-file-list="false"
@@ -9,7 +9,8 @@
         accept=".mp4"
       >
         <el-button size="small" type="primary">点击上传</el-button>
-      </el-upload>
+      </el-upload> -->
+      <el-button size="small" type="primary" icon="el-icon-upload" @click="openUpload">点击上传</el-button>
     </div>
     <el-table
       v-loading="listLoading"
@@ -30,6 +31,11 @@
           <span :class="'status' + scope.row.status">{{ scope.row.status | statusFilter }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="视频描述" width="110" show-overflow-tooltip>
+        <template slot-scope="scope">
+          {{ scope.row.video_desc }}
+        </template>
+      </el-table-column>
       <el-table-column label="视频大小" width="110">
         <template slot-scope="scope">
           {{ scope.row.file_size }}M
@@ -38,11 +44,6 @@
       <el-table-column label="码率(kb/s)" width="110">
         <template slot-scope="scope">
           {{ (scope.row.bit_rate / 1000).toFixed(0) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="视频大小" width="110">
-        <template slot-scope="scope">
-          {{ scope.row.file_size }}M
         </template>
       </el-table-column>
       <el-table-column label="视频格式" width="110">
@@ -103,6 +104,48 @@
       :total="total"
       @current-change="pageChange"
     />
+
+    <el-dialog title="上传文件" :visible.sync="uploadVisible">
+      <el-form ref="uploadForm" :model="uploadForm" label-width="80px">
+        <el-form-item label="模板类型" prop="fileName">
+          <el-input v-model="uploadForm.fileName" placeholder="请输入内容" class="input-with-select">
+            <!-- <el-button slot="append" type="primary" icon="el-icon-upload">选择文件</el-button> -->
+            <el-upload
+              slot="append"
+              ref="upload"
+              :data="uploadForm"
+              class="upload-demo"
+              :action="uploadUrl"
+              :show-file-list="false"
+              :on-success="uploadSuccess"
+              :on-change="fileChange"
+              :auto-upload="false"
+              accept=".mp4"
+            >
+              <el-button size="small" type="primary" icon="el-icon-upload">选择文件</el-button>
+            </el-upload>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="模板类型" prop="function">
+          <el-checkbox-group v-model="uploadForm.function">
+            <el-checkbox label="1" name="type">视频提取</el-checkbox>
+            <el-checkbox label="2" name="type">视频匹配</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="模板描述" prop="video_desc">
+          <el-input
+            v-model="uploadForm.video_desc"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入内容"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="uploadVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitUploadVisible()">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -124,9 +167,9 @@ export default {
     },
     functionFilter(fun) {
       const functionText = {
-        '0': '视频提取，视频匹配',
+        '1,2': '视频提取/视频匹配',
         '1': '视频提取',
-        '2': '视频提取'
+        '2': '视频匹配'
       }
       return functionText[fun]
     }
@@ -140,7 +183,14 @@ export default {
       },
       list: null,
       listLoading: true,
-      total: 0
+      total: 0,
+      uploadVisible: false,
+      uploadForm: {
+        function: [],
+        fileName: '',
+        video_desc: ''
+      }
+
     }
   },
   created() {
@@ -189,9 +239,23 @@ export default {
       this.fetchData()
     },
     uploadSuccess() {
+      this.uploadVisible = false
       this.$message('上传视频成功')
       this.getListParams.page = 1
       this.fetchData()
+    },
+    openUpload() {
+      // this.$refs['uploadForm'].resetFields()
+      this.uploadVisible = true
+      this.$nextTick(() => {
+        this.$refs['uploadForm'].resetFields()
+      })
+    },
+    fileChange(file) {
+      this.uploadForm.fileName = file.name
+    },
+    submitUploadVisible() {
+      this.$refs.upload.submit()
     }
   }
 }
