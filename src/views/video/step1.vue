@@ -368,7 +368,7 @@ export default {
       keypeopleGetFrame({
         reid: this.activePeople,
         video_id: this.video_id,
-        mot_manual_id: keyPeopleLatestFrame.mot_manual_id,
+        mot_manual_id: this.keyPeopleLatestFrame.mot_manual_id,
         frame_index: parseInt(this.formInline.curFrameIndex)
       }).then(response => {
         if (response.code === 0) {
