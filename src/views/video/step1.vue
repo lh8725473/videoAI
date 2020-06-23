@@ -30,6 +30,14 @@
         </el-row>
         <el-row>
           <el-col :span="8" style="line-height: 36px;">
+            人物别名:
+          </el-col>
+          <el-col :offset="1" :span="12">
+            <el-input v-model="part.another_name" size="medium" />
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8" style="line-height: 36px;">
             重要人物:
           </el-col>
           <el-col :offset="1" :span="12" style="line-height: 36px;">
@@ -256,6 +264,9 @@ export default {
         var y = 0
         var width = 0
         var height = 0
+        if (img.width < this.canvasWidth) {
+          this.canvasWidth = img.width
+        }
         if (img.width > img.height) { // 长方形
           x = 0
           width = this.canvasWidth
@@ -420,12 +431,18 @@ export default {
       })
     },
     preClassify() {
-      preClassify({
-        video_id: this.video_id
-      }).then(response => {
-        console.log(response)
+      updatePeople(this.part).then(response => {
         if (response.code === 0) {
-          this.$router.push('/video/step2?video_id=' + this.video_id + '&task_id=' + response.data.task_id)
+          preClassify({
+            video_id: this.video_id
+          }).then(response => {
+            console.log(response)
+            if (response.code === 0) {
+              this.$router.push('/video/step2?video_id=' + this.video_id + '&task_id=' + response.data.task_id)
+            }
+          })
+        } else {
+
         }
       })
     },

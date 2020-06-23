@@ -238,11 +238,17 @@ export default {
       this.getListParams.page = page
       this.fetchData()
     },
-    uploadSuccess() {
-      this.uploadVisible = false
-      this.$message('上传视频成功')
-      this.getListParams.page = 1
-      this.fetchData()
+    uploadSuccess(response) {
+      console.log(response)
+      if (response.code === 0) {
+        this.uploadVisible = false
+        this.$message.success('上传视频成功')
+        this.getListParams.page = 1
+        this.fetchData()
+      } else {
+        this.$message.error(response.message)
+        this.$refs['uploadForm'].resetFields()
+      }
     },
     openUpload() {
       // this.$refs['uploadForm'].resetFields()
