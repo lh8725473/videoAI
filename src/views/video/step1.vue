@@ -93,7 +93,7 @@
     </el-form>
     <el-radio-group v-show="isEdit" v-model="mot_manual.index" size="small" @change="changeMotManual">
       <el-radio v-for="(peopleFrame, index) in peopleFrameList" :key="index" :label="index" border>
-        <span :style="styleObject(peopleFrame)">TRACKER_ID:{{ peopleFrame.NO }} & RE_ID:{{ peopleFrame.NO2 }}</span>
+        <span>TRACKER_ID:{{ peopleFrame.NO }} & RE_ID:{{ peopleFrame.NO2 }}</span>
       </el-radio>
     </el-radio-group>
 
@@ -102,7 +102,7 @@
 </template>
 
 <script>
-import { getKeyPeople, getPeoples, updatePeople, preClassify, keyPeopleLatestFrame, keypeopleGetFrame, keypeopleUpdateFrame } from '@/api/video'
+import { getKeyPeople, getPeoples, getVideoInfo, updatePeople, preClassify, keyPeopleLatestFrame, keypeopleGetFrame, keypeopleUpdateFrame, batchUpdate } from '@/api/video'
 // import { fabric } from 'fabric'
 import zrender from 'zrender'
 import _ from 'lodash'
@@ -174,6 +174,7 @@ export default {
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
+    this.getVideoInfo()
     this.getPeoples()
     console.log(zrender)
   },
@@ -251,6 +252,13 @@ export default {
     //     url = null
     //   }
     // },
+    getVideoInfo() {
+      getVideoInfo({
+        video_id: this.video_id
+      }).then(response => {
+        this.videoInfo = response.data
+      })
+    },
     renderVideo(zr, data) {
       this.curImg = data.image
       const blob = new Blob([data.image], { type: 'image/jpeg' })
@@ -370,7 +378,6 @@ export default {
       //   'frame_index': parseInt(this.formInline.curFrameIndex)
       // })
       if (this.isEdit) {
-        this.keypeopleUpdateFrame()
         this.keypeopleGetFrame()
       } else {
         this.$socket.emit('show_frame', {
@@ -390,6 +397,7 @@ export default {
       //   'frame_index': parseInt(this.formInline.curFrameIndex)
       // })
       if (this.isEdit) {
+        this.keypeopleUpdateFrame()
         this.keypeopleGetFrame()
       } else {
         this.$socket.emit('show_frame', {
@@ -409,6 +417,7 @@ export default {
       //   'frame_index': parseInt(this.formInline.curFrameIndex)
       // })
       if (this.isEdit) {
+        this.batchUpdate(parseInt(this.formInline.curFrameIndex))
         this.keypeopleGetFrame()
       } else {
         this.$socket.emit('show_frame', {
@@ -419,6 +428,15 @@ export default {
           'frame_index': parseInt(this.formInline.curFrameIndex)
         })
       }
+    },
+    batchUpdate(frame_index) {
+      batchUpdate({
+        video_id: this.video_id,
+        reid: this.activePeople,
+        frame_index: frame_index,
+        mot_manual_id: this.keyPeopleLatestFrame.mot_manual_id
+      }).then(response => {
+      })
     },
     keyPeople() {
       this.$router.push('/video/step3?video_id=' + this.video_id + '&task_id=' + this.task_id)
@@ -431,6 +449,19 @@ export default {
       })
     },
     preClassify() {
+      if (this.keyPeopleLatestFrame) {
+        this.batchUpdate(this.videoInfo.nb_frames)
+      } else {
+        keyPeopleLatestFrame({
+          video_id: this.video_id,
+          key_people_id: this.keyPeopleId,
+          reid: this.activePeople
+        }).then(response => {
+          console.log(response)
+          this.keyPeopleLatestFrame = response.data
+          this.batchUpdate(this.videoInfo.nb_frames)
+        })
+      }
       updatePeople(this.part).then(response => {
         if (response.code === 0) {
           preClassify({
@@ -441,8 +472,6 @@ export default {
               this.$router.push('/video/step2?video_id=' + this.video_id + '&task_id=' + response.data.task_id)
             }
           })
-        } else {
-
         }
       })
     },

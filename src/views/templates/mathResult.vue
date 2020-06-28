@@ -16,7 +16,7 @@
         </template>
         <el-row>
           <div class="scroll-warp">
-            <p>模版 <i class="el-icon-video-play" @click="previewVideo(part)" /></p>
+            <p>模版 <i class="el-icon-video-play" @click="previewVideo(part, 'template')" /></p>
             <div v-for="img in part.template_frame_list" :key="img.frame_id" class="block">
               <el-image
                 style="width: 200px; height: 200px"
@@ -26,7 +26,7 @@
               <span class="demonstration">帧号：{{ img.frame_id }} </span>
             </div>
             <template v-for="(match_frame, index) in part.match_frame_list">
-              <p>匹配{{ index + 1 }} <i class="el-icon-video-play" @click="previewVideo(match_frame)" /></p>
+              <p>匹配{{ index + 1 }} <i class="el-icon-video-play" @click="previewVideo(match_frame, 'match')" /></p>
               <div v-for="(img, imgIndex) in match_frame.data" :key="imgIndex" class="block">
                 <el-image
                   style="width: 200px; height: 200px"
@@ -56,26 +56,12 @@
       size="700px"
       direction="rtl"
     >
-      <!-- <el-image
-        style="width: 200px; height: 200px"
-        :src="paly_frame_path"
-        fit="contain"
-      /> -->
-      <!-- <canvas id="video" width="640" height="480" />
-      <div>
-        当前帧:{{ curFrameIndex }}
-        <i v-show="btnStatus === 0" class="el-icon-video-play" @click="partPlay()" />
-        <i v-show="btnStatus === 1" class="el-icon-video-pause" @click="partPause()" />
-      </div> -->
       <el-col :span="24" class="current-frame-index-div">
         <div class="current-frame-index"> 当前帧数: {{ currentFrameIndex }}</div>
         <video ref="video" width="100%" height="480" :src="baseAPI + videoInfo.path" controls="controls">
           your browser does not support the video tag
         </video>
       </el-col>
-      <!-- <div style="width: 350px; height: 350px; display: inline-block;">
-        <img :src="paly_frame_path" style="object-fit: contain;width: 100%; height: 100%;">
-      </div> -->
     </el-drawer>
   </div>
 </template>
@@ -105,6 +91,8 @@ ImagePool.prototype.next = function() {
   }
 }
 
+let loading = null
+
 export default {
   filters: {
     status: s => {
@@ -125,6 +113,7 @@ export default {
       activeTemplateId: null,
       activeReid: null,
       templateList: [],
+      templateVideoId: null,
       activeVideoId: null,
       videoList: [],
       baseAPI: process.env.VUE_APP_BASE_API,
@@ -138,8 +127,7 @@ export default {
       curFrameIndex: 0,
       btnStatus: 0,
       videoInfo: {},
-      currentFrameIndex: 1,
-      loading: null
+      currentFrameIndex: 1
     }
   },
   created() {
@@ -168,7 +156,8 @@ export default {
     this.$socket.on('template_match', (res) => {
       console.log(res)
       if (res.task_match_status === '2') {
-        this.loading.close()
+        console.log(loading)
+        loading.close()
         this.getMatchSecond()
       }
     })
@@ -192,28 +181,35 @@ export default {
         if (response.code === 0) {
           console.log(response)
           if (response.data.task_match_status !== '2') {
-            this.loading = this.$loading({
+            loading = this.$loading({
               fullscreen: true,
               text: '匹配结果生成中...'
             })
+            console.log(loading)
           } else {
             this.reultInfo = response.data
             this.templateList = this.reultInfo.match_task_detail
             this.activeTemplateId = this.templateList[0].id + ''
+            this.templateVideoId = this.templateList[0].video_id
             this.activeReid = this.templateList[0].reid
             this.videoList = this.templateList[0].video_list
             this.activeVideoId = this.videoList[0].video_id + ''
-            this.getVideoInfo()
+            this.getVideoInfo(this.videoList[0].video_id, 'match')
+            this.getVideoInfo(this.templateVideoId, 'template')
             this.getMatchTaskDetail()
           }
         }
       })
     },
-    getVideoInfo() {
+    getVideoInfo(video_id, type) {
       getVideoInfo({
-        video_id: parseInt(this.activeVideoId)
+        video_id: video_id
       }).then(response => {
-        this.videoInfo = response.data
+        if (type === 'match') {
+          this.matchVideoInfo = response.data
+        } else {
+          this.templateVideoInfo = response.data
+        }
       })
     },
     templateChange(template) {
@@ -301,8 +297,12 @@ export default {
         task_id: this.task_id
       })
     },
-    previewVideo(part) {
-      console.log(part)
+    previewVideo(part, type) {
+      if (type === 'template') {
+        this.videoInfo = this.templateVideoInfo
+      } else {
+        this.videoInfo = this.matchVideoInfo
+      }
       this.drawer = true
       this.$nextTick(() => {
         const videoDom = this.$refs.video

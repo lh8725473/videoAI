@@ -6,9 +6,10 @@
       :src="srcUrl"
       :preview-src-list="srcList"
     />
-    <el-button size="medium" type="primary" style="position:absolute;right: 245px;top: 20px; z-index: 2;" @click="getKeyFrames(0)">还原系统结果</el-button>
-    <el-button size="medium" type="primary" style="position:absolute;right: 120px;top: 20px; z-index: 2;" @click="keyframeSave()">保存关键帧</el-button>
-    <el-button size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="nextStep()">下一步</el-button>
+    <el-button size="medium" type="primary" style="position:absolute;right: 265px;top: 20px; z-index: 2;" @click="getKeyFrames(0)">还原系统结果</el-button>
+    <el-button size="medium" type="primary" style="position:absolute;right: 140px;top: 20px; z-index: 2;" @click="keyframeSave()">保存关键帧</el-button>
+    <el-button v-show="taskStatus === '2'" size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2; width: 103px;" @click="nextStep()">下 一 步</el-button>
+    <el-button v-show="taskStatus !== '2'" :loading="true" size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="nextStep()">提取中</el-button>
     <el-tabs v-model="activePeoplePeopleNumber" type="card" @tab-click="peopleChange">
       <el-tab-pane v-for="people in peoples" :key="people.reid + ''" :label="'人物ID:' + people.reid" :name="people.reid + ''" />
     </el-tabs>
@@ -17,10 +18,11 @@
         <template slot="title">
           {{ part.name }} (已经选取关键帧，共{{ part.key_frame.length }}张)
           <span class="frame-range">帧数范围: {{ part.start_frame_index }}至{{ part.end_frame_index }}</span>
-          <el-tooltip class="item" effect="dark" content="预览关键帧" placement="top">
+          <span :class="'status' + part.key_frame_status">{{ part.key_frame_status | statusFilter }}</span>
+          <el-tooltip v-show="part.key_frame_status === '2'" class="item" effect="dark" content="预览关键帧" placement="top">
             <i class="el-icon-picture" @click.stop="previewKeyFrame(part.key_frame)" />
           </el-tooltip>
-          <el-tooltip class="item" effect="dark" content="预览原视频" placement="top">
+          <el-tooltip v-show="part.key_frame_status === '2'" class="item" effect="dark" content="预览原视频" placement="top">
             <i class="el-icon-video-play" @click.stop="previewVideo(part)" />
           </el-tooltip>
         </template>
@@ -122,11 +124,21 @@ export default {
     draggable
   },
   filters: {
-
+    statusFilter: s => {
+      console.log(s)
+      const statusMap = {
+        '0': '未开始',
+        '1': '提取中',
+        '2': '提取完成',
+        '-100': '提取失败'
+      }
+      return statusMap[s]
+    }
   },
   data() {
     return {
       stringdsad: '人物重心',
+      taskStatus: '0',
       srcUrl: '',
       srcList: [],
       baseAPI: process.env.VUE_APP_BASE_API,
@@ -167,18 +179,23 @@ export default {
       people = _.find(this.peoples, { reid: res.data.reid })
       part = _.find(people.data, { id: res.data.id })
       part.key_frame = res.data.key_frame
+      part.key_frame_status = res.data.key_frame_status
     })
   },
   mounted() {
     this.$socket.on('preview_key_frame', (data) => {
       const part = _.find(this.parts, { id: this.cruPartId })
-      data.data.full_frame_path = data.data.frame_path
       part.previewParts.push(data.data)
+    })
+    this.$socket.on('step3_status', (data) => {
+      console.log(data)
+      this.taskStatus = data.data.status
     })
   },
   beforeDestroy() {
     this.$socket.removeListener('key_frame_response')
     this.$socket.removeListener('preview_key_frame')
+    this.$socket.removeListener('step3_status')
   },
   methods: {
     getVideoInfo() {
@@ -200,6 +217,7 @@ export default {
             partInfo.cruframe_index = 0
           })
         })
+        this.taskStatus = response.data.status
         this.peoples = response.data.peoples
         this.activePeople = this.peoples[0]
         this.activePeoplePeopleNumber = this.peoples[0].reid + ''
@@ -349,6 +367,18 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.status1{
+  color: #409EFF
+}
+.status2{
+  color: #67C23A;
+}
+.status10{
+  color: #E6A23C;
+}
+.status-100{
+  color: #F56C6C;
+}
 .el-icon-edit{
   cursor: pointer;
   &:hover{
@@ -374,6 +404,8 @@ export default {
 }
 .frame-range{
   margin-left: 10px;
+  margin-right: 10px;
+
 }
 .el-icon-picture{
   margin-left: 10px;

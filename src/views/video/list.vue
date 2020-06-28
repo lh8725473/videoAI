@@ -267,7 +267,7 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .video-list{
   .status1{
     color: #409EFF

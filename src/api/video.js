@@ -240,3 +240,10 @@ export function keypeopleUpdateFrame(data) {
   })
 }
 
+export function batchUpdate(data) {
+  return request({
+    url: '/keypeople/batch_update',
+    method: 'post',
+    data
+  })
+}
