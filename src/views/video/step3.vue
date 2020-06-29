@@ -10,7 +10,7 @@
     <el-button size="medium" type="primary" style="position:absolute;right: 140px;top: 20px; z-index: 2;" @click="keyframeSave()">保存关键帧</el-button>
     <el-button v-show="taskStatus === '2'" size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2; width: 103px;" @click="nextStep()">下 一 步</el-button>
     <el-button v-show="taskStatus !== '2'" :loading="true" size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="nextStep()">提取中</el-button>
-    <el-tabs v-model="activePeoplePeopleNumber" type="card" @tab-click="peopleChange">
+    <el-tabs v-model="activePeopleNumber" type="card" @tab-click="peopleChange">
       <el-tab-pane v-for="people in peoples" :key="people.reid + ''" :label="'人物ID:' + people.reid" :name="people.reid + ''" />
     </el-tabs>
     <el-collapse v-model="activePart" @change="partChange">
@@ -148,7 +148,7 @@ export default {
       result: [],
       cruPartId: '',
       activePeople: {},
-      activePeoplePeopleNumber: '',
+      activePeopleNumber: '',
       taskInfo: {},
       videoInfo: {},
       url: '',
@@ -220,7 +220,7 @@ export default {
         this.taskStatus = response.data.status
         this.peoples = response.data.peoples
         this.activePeople = this.peoples[0]
-        this.activePeoplePeopleNumber = this.peoples[0].reid + ''
+        this.activePeopleNumber = this.peoples[0].reid + ''
         this.parts = this.peoples[0].data
         console.log(this.peoples)
       })
@@ -266,7 +266,7 @@ export default {
         const postPart = _.clone(part)
         postPart.templateName = value
         postPart.partFrames = postPart.partFrames.split(',')
-        postPart.reId = this.activePeoplePeopleNumber + ''
+        postPart.reId = this.activePeopleNumber + ''
         createTemplate({
           task_id: this.task_id,
           video_id: this.video_id,

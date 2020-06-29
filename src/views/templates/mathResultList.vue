@@ -60,7 +60,7 @@
             <el-table :data="scope.row.videos">
               <el-table-column property="video_name" label="名称" />
               <el-table-column width="170" property="upload_time" label="上传时间" />
-              <el-table-column width="80" property="total_time" label="时长" />
+              <el-table-column width="80" property="total_time" label="时长(s)" />
             </el-table>
             <el-link slot="reference" type="primary">{{ scope.row.video_count }}</el-link>
           </el-popover>

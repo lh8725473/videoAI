@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-button size="medium" type="primary" style="position:absolute;right: 130px;top: 20px; z-index: 2;" @click="saveTemplate()">保存模板</el-button>
     <el-button size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="pigeonhole()">归档模板</el-button>
-    <el-tabs v-model="activePeoplePeopleNumber" type="card" @tab-click="peopleChange">
+    <el-tabs v-model="activePeopleNumber" type="card" @tab-click="peopleChange">
       <el-tab-pane v-for="people in peoples" :key="people.reid + ''" :label="'人物ID:' + people.reid" :name="people.reid + ''" />
     </el-tabs>
     <el-collapse v-model="activePart" @change="partChange">
@@ -188,7 +188,7 @@ export default {
       result: [],
       part: [],
       activePeople: {},
-      activePeoplePeopleNumber: '',
+      activePeopleNumber: '',
       taskInfo: {},
       videoInfo: {},
       url: '',
@@ -260,7 +260,7 @@ export default {
         })
         this.peoples = response.data.peoples
         this.activePeople = this.peoples[0]
-        this.activePeoplePeopleNumber = this.peoples[0].reid + ''
+        this.activePeopleNumber = this.peoples[0].reid + ''
         this.parts = this.peoples[0].data
         console.log(this.parts)
       })
@@ -290,7 +290,7 @@ export default {
         })
         this.peoples = response.data.peoples
         this.activePeople = this.peoples[0]
-        this.activePeoplePeopleNumber = this.peoples[0].reid + ''
+        this.activePeopleNumber = this.peoples[0].reid + ''
         this.parts = this.peoples[0].data
       })
     },
@@ -311,7 +311,7 @@ export default {
         task_id: this.task_id,
         part_id: part.id,
         frame_index: img.frame_index,
-        reid: this.activePeoplePeopleNumber
+        reid: this.activePeopleNumber
       }).then(response => {
         response.data.frame_path = img.frame_path
         response.data.full_frame_path = img.full_frame_path
@@ -344,7 +344,7 @@ export default {
         task_id: this.task_id,
         part_id: part.id,
         frame_index: img.frame_index,
-        reid: this.activePeoplePeopleNumber,
+        reid: this.activePeopleNumber,
         operation_type: 0
       }).then(response => {
         if (response.code === 0) {
@@ -389,7 +389,7 @@ export default {
         task_id: this.task_id,
         video_id: this.video_id,
         action_id: this.actionForm.action_id,
-        reid: this.activePeoplePeopleNumber
+        reid: this.activePeopleNumber
       }).then(response => {
         if (response.code === 0) {
           this.$message('模板归档成功')
