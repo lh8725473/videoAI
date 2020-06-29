@@ -194,7 +194,7 @@ export default {
             this.activeReid = this.templateList[0].reid
             this.videoList = this.templateList[0].video_list
             this.activeVideoId = this.videoList[0].video_id + ''
-            this.getVideoInfo(this.videoList[0].video_id, 'match')
+            this.getVideoInfo(this.activeVideoId, 'match')
             this.getVideoInfo(this.templateVideoId, 'template')
             this.getMatchTaskDetail()
           }
@@ -214,15 +214,17 @@ export default {
     },
     templateChange(template) {
       this.activeTemplateId = this.templateList[template.index].id + ''
+      this.templateVideoId = this.templateList[template.index].video_id
       this.activeReid = this.templateList[template.index].reid
       this.videoList = this.templateList[template.index].video_list
       this.activeVideoId = this.videoList[0].video_id + ''
-      this.getVideoInfo()
+      this.getVideoInfo(this.activeVideoId, 'match')
+      this.getVideoInfo(this.templateVideoId, 'template')
       this.getMatchTaskDetail()
     },
     videoChange(video) {
       this.activeVideoId = this.videoList[video.index].video_id + ''
-      this.getVideoInfo()
+      this.getVideoInfo(this.activeVideoId, 'match')
       this.getMatchTaskDetail()
     },
     getMatchTaskDetail() {
