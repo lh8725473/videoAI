@@ -71,7 +71,7 @@
             <div v-for="img in part.previewParts" :key="img.frame_index" class="block" :class="{'cru-frame-index': img.frame_index === part.cruframe_index}">
               <el-image
                 style="width: 198px; height: 200px"
-                :src="img.frame_path"
+                :src="img.full_frame_path"
                 fit="contain"
               />
               <span class="demonstration">帧号：{{ img.frame_index }}</span>

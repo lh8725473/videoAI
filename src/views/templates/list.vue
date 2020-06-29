@@ -144,7 +144,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="videoListVisible = false">取 消</el-button>
-        <el-button type="primary" :disabled="selectedVideoList.length === 0" @click="startMath">开 始 匹 配</el-button>
+        <el-button type="primary" :disabled="selectedVideoList.length === 0" @click="onpenMath">开 始 匹 配</el-button>
       </span>
     </el-dialog>
 
@@ -162,12 +162,31 @@
         <el-button type="primary" @click="addAction()">确 定</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog title="匹配任务" :visible.sync="templateMatchVisible">
+      <el-form :model="templateMatchForm" label-width="100px">
+        <el-form-item label="匹配名称">
+          <el-autocomplete
+            v-model="templateMatchForm.action_name"
+            class="inline-input"
+            autocomplete="off"
+            :fetch-suggestions="querySearch"
+            value-key="task_match_name"
+            placeholder="请输入内容"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="templateMatchVisible = false">取 消</el-button>
+        <el-button type="primary" @click="startMath()">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { getVideoList, preClassify, getActionsList, addAction, getTemplateAction } from '@/api/video'
-import { getTemplateList, startTemplateMatch, templateMatchTest } from '@/api/templates'
+import { getTemplateList, startTemplateMatch, templateMatchTest, getMatchList } from '@/api/templates'
 import { setParts } from './parts.vm'
 import _ from 'lodash'
 
@@ -213,6 +232,7 @@ export default {
       },
       videoListVisible: false,
       addActionVisible: false,
+      templateMatchVisible: false,
       multipleSelection: null,
       selectedVideo: null,
       // element $loading()
@@ -221,13 +241,26 @@ export default {
         action_name: '',
         action_desc: ''
       },
-      selectedVideoList: []
+      templateMatchForm: {
+        task_name: ''
+      },
+      selectedVideoList: [],
+      matchList: []
     }
   },
   created() {
     this.getActionsList()
+    this.getMatchList()
   },
   methods: {
+    getMatchList() {
+      getMatchList({
+        type: 'all'
+      }).then(response => {
+        this.matchList = response.data
+        this.total = response.page_info.total
+      })
+    },
     getActionsList() {
       this.listLoading = true
       getActionsList(this.getListParams).then(response => {
@@ -287,29 +320,28 @@ export default {
     videoSelectionChange(val) {
       this.selectedVideoList = val
     },
+    onpenMath() {
+      this.templateMatchVisible = true
+    },
     startMath() {
-      this.$prompt('请输入匹配名称', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputPattern: /^[a-zA-Z0-9_\u4e00-\u9fa5]+/,
-        inputErrorMessage: '匹配名称不能为空'
-      }).then(({ value }) => {
-        this.loading = this.$loading({
-          fullscreen: true,
-          text: '匹配模板中...'
-        })
-        templateMatchTest({
-          task_name: value,
-          video_id: _.map(this.selectedVideoList, 'id'),
-          action_template_id: _.map(this.multipleSelection, 'id')
-        }).then(response => {
-          console.log(response)
-          // setParts(response)
-          this.loading.close()
-          this.$router.push('/templates/mathResult?task_match_id=' + response.data.task_match_id)
-          // this.$router.push({ name: 'mathResult' })
-        })
-      }).catch(() => {
+      this.templateMatchVisible = true
+      this.loading = this.$loading({
+        fullscreen: true,
+        text: '匹配模板中...'
+      })
+      templateMatchTest({
+        task_name: this.templateMatchForm.task_name,
+        video_id: _.map(this.selectedVideoList, 'id'),
+        action_template_id: _.map(this.multipleSelection, 'id')
+      }).then(response => {
+        console.log(response)
+        this.templateMatchVisible = false
+        // setParts(response)
+        this.loading.close()
+        this.$router.push('/templates/mathResult?task_match_id=' + response.data.task_match_id)
+        // this.$router.push({ name: 'mathResult' })
+      }).catch((response) => {
+        this.loading.close()
       })
     },
     addAction() {
@@ -333,6 +365,19 @@ export default {
     },
     toStep4(row) {
       this.$router.push('/video/step4?video_id=' + row.video_id + '&task_id=' + row.task_id + '&reid=' + row.reid)
+    },
+    querySearch(queryString, cb) {
+      console.log(queryString)
+      var matchList = this.matchList
+      var results = queryString ? matchList.filter(this.createFilter(queryString)) : matchList
+      // 调用 callback 返回建议列表的数据
+      console.log(results)
+      cb(results)
+    },
+    createFilter(queryString) {
+      return (match) => {
+        return (match.task_match_name.toLowerCase().indexOf(queryString.toLowerCase()) === 0)
+      }
     }
   }
 }
@@ -345,5 +390,8 @@ export default {
 .el-pagination{
   text-align: right;
   margin-top: 15px;
+}
+.inline-input{
+  display: block;
 }
 </style>

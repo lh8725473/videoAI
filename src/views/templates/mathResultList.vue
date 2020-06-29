@@ -34,14 +34,36 @@
           {{ scope.row.task_match_status | statusFilter }}
         </template>
       </el-table-column>
-      <el-table-column label="模板个数" width="110">
+      <el-table-column label="模板个数" width="110" align="center">
         <template slot-scope="scope">
-          {{ scope.row.template_count }}
+          <el-popover
+            placement="right"
+            width="500"
+            trigger="click"
+          >
+            <el-table :data="scope.row.templates">
+              <el-table-column property="name" label="名称" />
+              <el-table-column width="170" property="create_time" label="创建时间" />
+              <el-table-column width="130" property="reid" label="人物REID" />
+            </el-table>
+            <el-link slot="reference" type="primary">{{ scope.row.template_count }}</el-link>
+          </el-popover>
         </template>
       </el-table-column>
-      <el-table-column label="视频个数" width="110">
+      <el-table-column label="视频个数" width="110" align="center">
         <template slot-scope="scope">
-          {{ scope.row.video_count }}
+          <el-popover
+            placement="right"
+            width="500"
+            trigger="click"
+          >
+            <el-table :data="scope.row.videos">
+              <el-table-column property="video_name" label="名称" />
+              <el-table-column width="170" property="upload_time" label="上传时间" />
+              <el-table-column width="80" property="total_time" label="时长" />
+            </el-table>
+            <el-link slot="reference" type="primary">{{ scope.row.video_count }}</el-link>
+          </el-popover>
         </template>
       </el-table-column>
     </el-table>

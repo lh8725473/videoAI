@@ -36,7 +36,7 @@
                 <span class="demonstration">帧号：{{ img.frame_id }} </span>
                 <el-row>
                   <el-col :span="12">帧间距: {{ img.frame_distance }}</el-col>
-                  <el-col :span="12">帧间事件: {{ img.frame_time }}s</el-col>
+                  <el-col :span="12">帧间时间: {{ img.frame_time }}s</el-col>
                   <el-col :span="12">帧间分数: {{ img.interframe_value }}</el-col>
                   <el-col :span="12">相似率: {{ (img.match_rate * 100).toFixed(2) }}%</el-col>
                 </el-row>
