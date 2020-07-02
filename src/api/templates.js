@@ -71,9 +71,18 @@ export function getVersions(params) {
     params
   })
 }
+
 export function deleteVersion(data) {
   return request({
     url: '/template/delete_version',
+    method: 'post',
+    data
+  })
+}
+
+export function deriveTask(data) {
+  return request({
+    url: '/task/derive_task',
     method: 'post',
     data
   })

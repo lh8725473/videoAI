@@ -1,7 +1,8 @@
 <template>
   <div class="app-container">
     <div class="action-butons">
-      <el-upload
+      <el-button size="small" type="primary" :disabled="buttonDis.deriveTask" @click="onpenDeriveTaskVisible()">模板派生</el-button>
+      <!-- <el-upload
         class="upload-demo"
         :action="uploadUrl"
         :show-file-list="false"
@@ -9,7 +10,7 @@
         accept=".mp4"
       >
         <el-button size="small" type="primary">点击上传</el-button>
-      </el-upload>
+      </el-upload> -->
     </div>
     <el-table
       v-loading="listLoading"
@@ -18,7 +19,12 @@
       border
       fit
       highlight-current-row
+      @selection-change="handleSelectionChange"
     >
+      <el-table-column
+        type="selection"
+        width="55"
+      />
       <el-table-column label="任务名称">
         <template slot-scope="scope">
           <span>{{ scope.row.task_name }}</span>
@@ -73,11 +79,38 @@
       :total="total"
       @current-change="pageChange"
     />
+
+    <el-dialog title="匹配任务" :visible.sync="deriveTaskVisible">
+      <el-form :model="deriveTaskForm" label-width="100px">
+        <el-form-item label="任务名称">
+          <el-input
+            v-model="deriveTaskForm.task_name"
+            placeholder="请输入内容"
+          />
+        </el-form-item>
+        <el-form-item label="任务名称">
+          <el-select v-model="deriveTaskForm.step" placeholder="请选择">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+              :disabled="item.disabled"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="deriveTaskVisible = false">取 消</el-button>
+        <el-button type="primary" @click="deriveTask()">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { getVideoList, preClassify, postKeyPeople, basicData, taskList } from '@/api/video'
+import { deriveTask } from '@/api/templates'
 import _ from 'lodash'
 
 export default {
@@ -110,7 +143,28 @@ export default {
       },
       list: null,
       listLoading: true,
-      total: 0
+      total: 0,
+      deriveTaskVisible: false,
+      deriveTaskForm: {
+        task_name: '',
+        step: ''
+      },
+      buttonDis: {
+        deriveTask: true
+      },
+      options: [{
+        value: 1,
+        label: '视频预分段',
+        disabled: false
+      }, {
+        value: 2,
+        label: '关键帧提取',
+        disabled: false
+      }, {
+        value: 3,
+        label: '模板提取',
+        disabled: false
+      }]
     }
   },
   created() {
@@ -162,12 +216,51 @@ export default {
       this.$message('上传视频成功')
       this.getListParams.page = 1
       this.fetchData()
+    },
+    handleSelectionChange(val) {
+      this.multipleSelection = val
+      this.buttonDis.deriveTask = this.multipleSelection.length !== 1
+    },
+    onpenDeriveTaskVisible() {
+      this.deriveTaskVisible = true
+      var row = _.first(this.multipleSelection)
+      this.deriveTaskForm.task_name = row.task_name
+      if (row.step3 === '0') {
+        this.options[2].disabled = true
+      }
+      if (row.step2 === '0') {
+        this.options[1].disabled = true
+      }
+    },
+    deriveTask() {
+      var row = _.first(this.multipleSelection)
+      deriveTask({
+        task_name: this.deriveTaskForm.task_name,
+        task_id: row.task_id,
+        step_index: this.deriveTaskForm.step,
+        version_id: row.version_id
+      }).then(response => {
+        if (response.code === 0) {
+          if (this.deriveTaskForm.step === 1) {
+            this.$router.push('/video/step2?video_id=' + response.data.video_id + '&task_id=' + response.data.task_id)
+          }
+          if (this.deriveTaskForm.step === 2) {
+            this.$router.push('/video/step3?video_id=' + response.data.video_id + '&task_id=' + response.data.task_id)
+          }
+          if (this.deriveTaskForm.step === 3) {
+            this.$router.push('/video/step4?video_id=' + response.data.video_id + '&task_id=' + response.data.task_id + '&version_id=' + response.data.version_id)
+          }
+        }
+      })
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+.el-select{
+  width: 100%;
+}
 .action-butons{
   margin-bottom: 10px;
 }

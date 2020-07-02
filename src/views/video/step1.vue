@@ -10,7 +10,7 @@
         </el-tabs>
         <el-row>
           <el-col :span="10">
-            reid:
+            人物ID:
           </el-col>
           <el-col :offset="1" :span="10">
             {{ part.reid }}
@@ -22,7 +22,7 @@
         </el-row>
         <el-row>
           <el-col :span="8" style="line-height: 36px;">
-            动作名称:
+            模板名称:
           </el-col>
           <el-col :offset="1" :span="12">
             <el-input v-model="part.action_name" size="medium" />

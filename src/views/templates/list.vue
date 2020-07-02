@@ -5,7 +5,7 @@
         <el-option
           v-for="action in actionList"
           :key="action.id"
-          :label="action.action_name + '(' + action.action_desc + ')'"
+          :label="action.action_name"
           :value="action.id"
         />
       </el-select>
@@ -56,7 +56,18 @@
         prop="action_name"
         label="标签"
         width="120"
-      />
+      >
+        <template slot-scope="scope">
+          <el-tooltip
+            placement="top"
+            width="200"
+            effect="dark"
+            :content="scope.row.action_desc"
+          >
+            <span style="cursor: pointer;">{{ scope.row.action_name }}<i class="el-icon-question" /></span>
+          </el-tooltip>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="video_name"
         label="模板来源"
@@ -172,12 +183,12 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="增加动作" :visible.sync="addActionVisible">
+    <el-dialog title="增加标签" :visible.sync="addActionVisible">
       <el-form :model="actionForm" label-width="100px">
-        <el-form-item label="动作名称">
+        <el-form-item label="标签名称">
           <el-input v-model="actionForm.action_name" autocomplete="off" />
         </el-form-item>
-        <el-form-item label="动作描述">
+        <el-form-item label="标签描述">
           <el-input v-model="actionForm.action_desc" type="textarea" :rows="3" autocomplete="off" />
         </el-form-item>
       </el-form>

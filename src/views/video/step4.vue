@@ -147,8 +147,8 @@
 
     <el-dialog title="模板归档" :visible.sync="pigeonholeVisible">
       <el-form :model="actionForm" label-width="100px">
-        <el-form-item label="动作名称">
-          <el-select v-model="actionForm.action_id" placeholder="请选择动作名称">
+        <el-form-item label="标签名称">
+          <el-select v-model="actionForm.action_id" placeholder="请选择标签名称">
             <el-option
               v-for="actions in actionsList"
               :key="actions.id"

@@ -97,6 +97,7 @@
             :fetch-suggestions="querySearch"
             value-key="task_match_name"
             placeholder="请输入内容"
+            style="width: 100%;"
           />
         </el-form-item>
       </el-form>

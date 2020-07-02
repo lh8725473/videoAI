@@ -1,6 +1,8 @@
 <template>
   <div class="login-container">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
+    <input v-model="loginForm.username">
+    <input v-model="loginForm.password">
+    <!-- <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" label-position="left">
 
       <div class="title-container">
         <h3 class="title">Login Form</h3>
@@ -17,7 +19,6 @@
           name="username"
           type="text"
           tabindex="1"
-          auto-complete="on"
         />
       </el-form-item>
 
@@ -33,7 +34,6 @@
           placeholder="Password"
           name="password"
           tabindex="2"
-          auto-complete="on"
           @keyup.enter.native="handleLogin"
         />
         <span class="show-pwd" @click="showPwd">
@@ -48,7 +48,7 @@
         <span> password: any</span>
       </div>
 
-    </el-form>
+    </el-form> -->
   </div>
 </template>
 
@@ -74,8 +74,8 @@ export default {
     }
     return {
       loginForm: {
-        username: 'admin',
-        password: '111111'
+        username: '12',
+        password: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -92,7 +92,31 @@ export default {
         this.redirect = route.query && route.query.redirect
       },
       immediate: true
+    },
+    loginForm: {
+      handler: function(newV, oldV) {
+        console.log(newV.username)
+        console.log(oldV.username)
+        console.log(newV.password)
+        console.log(oldV.password)
+      },
+      deep: true,
+      immediate: true
     }
+  },
+  created() {
+    // const unwatch = this.$watch(
+    //   'loginForm',
+    //   (a, b) => {
+    //     console.log(a)
+    //     console.log(b)
+    //     console.log(c)
+    //     console.log('数据发生了变化')
+    //   },
+    //   {
+    //     deep: true
+    //   }
+    // )
   },
   methods: {
     showPwd() {
