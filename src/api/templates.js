@@ -64,3 +64,17 @@ export function getMatchTaskDetail(params) {
   })
 }
 
+export function getVersions(params) {
+  return request({
+    url: '/template/versions',
+    method: 'get',
+    params
+  })
+}
+export function deleteVersion(data) {
+  return request({
+    url: '/template/delete_version',
+    method: 'post',
+    data
+  })
+}

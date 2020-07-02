@@ -18,7 +18,7 @@
         <template slot="title">
           {{ part.name }} (已经选取关键帧，共{{ part.key_frame.length }}张)
           <span class="frame-range">帧数范围: {{ part.start_frame_index }}至{{ part.end_frame_index }}</span>
-          <span :class="'status' + part.key_frame_status">{{ part.key_frame_status | statusFilter }}</span>
+          <span :class="'status' + part.key_frame_status">{{ part.key_frame_status | statusFilter }} {{ part.key_frame_status_text }}</span>
           <el-tooltip v-show="part.key_frame_status === '2'" class="item" effect="dark" content="预览关键帧" placement="top">
             <i class="el-icon-picture" @click.stop="previewKeyFrame(part.key_frame)" />
           </el-tooltip>
@@ -114,7 +114,7 @@
 <script>
 import { Sortable, Swap } from 'sortablejs/modular/sortable.core.esm'
 import { getKeyFrames, getImageFeature, createTemplate, keyframeSave, getVideoInfo, updateKeyframeDesc } from '@/api/video'
-import { fabric } from 'fabric'
+// import { fabric } from 'fabric'
 import draggable from 'vuedraggable'
 import _ from 'lodash'
 // const { fabric } = require('fabric')
@@ -299,7 +299,7 @@ export default {
       }).then(response => {
         if (response.code === 0) {
           this.$message('模板生成成功')
-          this.$router.push('/video/step4?video_id=' + this.video_id + '&task_id=' + this.task_id)
+          this.$router.push('/video/step4?video_id=' + this.video_id + '&task_id=' + this.task_id + '&version_id=' + response.data.version_id)
         }
       })
     },

@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-button size="medium" type="primary" style="position:absolute;right: 130px;top: 20px; z-index: 2;" @click="saveTemplate()">保存模板</el-button>
+    <el-button size="medium" type="primary" style="position:absolute;right: 130px;top: 20px; z-index: 2;" @click="openVersionDesVisible()">保存模板</el-button>
     <el-button size="medium" type="primary" style="position:absolute;right: 25px;top: 20px; z-index: 2;" @click="pigeonhole()">归档模板</el-button>
     <el-tabs v-model="activePeopleNumber" type="card" @tab-click="peopleChange">
       <el-tab-pane v-for="people in peoples" :key="people.reid + ''" :label="'人物ID:' + people.reid" :name="people.reid + ''" />
@@ -163,6 +163,18 @@
         <el-button type="primary" @click="archive()">确 定</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog title="保存模板" :visible.sync="versionDesVisible">
+      <el-form :model="versionDesForm">
+        <el-form-item label="版本描述">
+          <el-input v-model="versionDesForm.version_desc" type="textarea" :autosize="{ minRows: 3, maxRows: 5}" autocomplete="off" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="versionDesVisible = false">取 消</el-button>
+        <el-button type="primary" @click="saveTemplate()">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -204,12 +216,17 @@ export default {
       actionForm: {
         action_id: ''
       },
-      templateDetailList: []
+      templateDetailList: [],
+      versionDesVisible: false,
+      versionDesForm: {
+        version_desc: ''
+      }
     }
   },
   created() {
     this.video_id = this.$route.query.video_id
     this.task_id = this.$route.query.task_id
+    this.version_id = this.$route.query.version_id
     this.reid = this.$route.query.reid
     // this.loading = this.$loading({
     //   fullscreen: true,
@@ -309,6 +326,7 @@ export default {
       getFrameFeature({
         video_id: this.video_id,
         task_id: this.task_id,
+        version_id: this.version_id,
         part_id: part.id,
         frame_index: img.frame_index,
         reid: this.activePeopleNumber
@@ -369,12 +387,19 @@ export default {
         color: 'rgb(' + item.color[2] + ',' + item.color[1] + ',' + item.color[0] + ')'
       }
     },
-    saveTemplate(part) {
+    openVersionDesVisible() {
+      this.versionDesVisible = true
+    },
+    saveTemplate() {
       saveTemplate({
-        data: this.templateDetailList
+        data: this.templateDetailList,
+        version_id: this.version_id,
+        task_id: this.task_id,
+        version_desc: this.versionDesForm.version_desc
       }).then((response) => {
         if (response.code === 0) {
           this.$message('保存模板成功')
+          this.versionDesVisible = false
         }
       })
     },

@@ -1,27 +1,29 @@
 <template>
   <div class="app-container">
     <div class="action-butons">
-      <el-button size="small" type="primary" @click="addActionVisible = true">增加动作</el-button>
+      <el-select v-model="getListParams.action_id" clearable size="small" placeholder="请选择标签" @change="actionChange()">
+        <el-option
+          v-for="action in actionList"
+          :key="action.id"
+          :label="action.action_name + '(' + action.action_desc + ')'"
+          :value="action.id"
+        />
+      </el-select>
+      <el-button size="small" type="primary" @click="addActionVisible = true">增加标签</el-button>
       <el-button size="small" type="primary" :disabled="buttonDis.templateMatch" @click="templateMatch()">模板匹配</el-button>
+      <el-button size="small" type="primary" :disabled="buttonDis.templateMatch" @click="deleteTemplate()">删除</el-button>
     </div>
     <el-table
-      v-loading="listLoading"
-      :data="list"
-      element-loading-text="Loading"
+      :data="templateList"
+      style="width: 100%"
       border
-      fit
-      highlight-current-row
-      @expand-change="expandChange"
+      @expand-change="templateChange"
     >
-      <!-- <el-table-column
-        type="selection"
-        width="40"
-      /> -->
       <el-table-column type="expand">
-        <template slot-scope="props">
+        <template slot-scope="versionProps">
           <el-table
             ref="multipleTable"
-            :data="props.row.templateList"
+            :data="versionProps.row.versionList"
             style="width: 100%"
             border
             @selection-change="handleSelectionChange"
@@ -30,48 +32,70 @@
               type="selection"
               width="55"
             />
-            <el-table-column
-              label="模板名称"
-            >
-              <template slot-scope="scope">
-                <el-link type="primary" @click="toStep4(scope.row)">{{ scope.row.name }}</el-link>
+            <el-table-column property="version_name" label="版本号">
+              <template slot-scope="versionScope">
+                <el-link type="primary" @click="toStep4(versionProps.row, versionScope.row)">{{ versionScope.row.version_name }}</el-link>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="create_time"
-              label="创建时间"
-              width="160"
-            />
-            <el-table-column
-              prop="video_name"
-              label="模板来源"
-              width="180"
-            />
-            <el-table-column
-              prop="reid"
-              label="人物REID"
-              width="120"
-            />
+            <el-table-column property="version_desc" label="描述" />
+            <el-table-column property="create_time" label="创建时间" />
           </el-table>
         </template>
       </el-table-column>
-      <el-table-column label="动作名称" width="110">
+      <el-table-column
+        label="模板名称"
+      >
         <template slot-scope="scope">
-          {{ scope.row.action_name }}
+          <span>{{ scope.row.name }}</span>
         </template>
+        <!-- <template slot-scope="scope">
+          <el-link type="primary" @click="toStep4(scope.row)">{{ scope.row.name }}</el-link>
+        </template> -->
       </el-table-column>
-      <el-table-column label="动作描述">
-        <template slot-scope="scope">
-          {{ scope.row.action_desc }}
-        </template>
-      </el-table-column>
-      <el-table-column label="创建时间" width="160" align="center">
-        <template slot-scope="scope">
-          {{ scope.row.create_time }}
-        </template>
-      </el-table-column>
+      <el-table-column
+        prop="action_name"
+        label="标签"
+        width="120"
+      />
+      <el-table-column
+        prop="video_name"
+        label="模板来源"
+        width="180"
+      />
+      <el-table-column
+        prop="reid"
+        label="人物REID"
+        width="120"
+      />
+      <el-table-column
+        prop="version_count"
+        label="版本数"
+        width="120"
+      />
+      <el-table-column
+        prop="create_time"
+        label="创建时间"
+        width="160"
+      />
+      <!-- <template slot-scope="scope">
+        <el-popover
+          placement="right"
+          width="500"
+          trigger="click"
+        >
+          <el-table :data="versionList">
+            <el-table-column property="version_name" label="版本号">
+              <template slot-scope="versionScope">
+                <el-link type="primary" @click="toStep4(scope.row, versionScope.row)">{{ versionScope.row.version_name }}</el-link>
+              </template>
+            </el-table-column>
+            <el-table-column property="version_desc" label="描述" />
+            <el-table-column property="create_time" label="创建时间" />
+          </el-table>
+          <el-link slot="reference" type="primary" @click="getVersionList(scope.row)">{{ scope.row.version_count }}</el-link>
+        </el-popover>
+      </template> -->
     </el-table>
-
     <el-pagination
       background
       layout="prev, pager, next"
@@ -186,7 +210,7 @@
 
 <script>
 import { getVideoList, preClassify, getActionsList, addAction, getTemplateAction } from '@/api/video'
-import { getTemplateList, startTemplateMatch, templateMatchTest, getMatchList } from '@/api/templates'
+import { getTemplateList, startTemplateMatch, templateMatchTest, getMatchList, getVersions, deleteVersion } from '@/api/templates'
 import { setParts } from './parts.vm'
 import _ from 'lodash'
 
@@ -221,8 +245,11 @@ export default {
       uploadUrl: process.env.VUE_APP_BASE_API + '/video/upload',
       getListParams: {
         page: 1,
-        per_page: 10
+        per_page: 10,
+        action_id: ''
       },
+      templateList: [],
+      actionList: [],
       list: null,
       videoList: [],
       listLoading: true,
@@ -245,12 +272,14 @@ export default {
         task_name: ''
       },
       selectedVideoList: [],
-      matchList: []
+      matchList: [],
+      versionList: []
     }
   },
   created() {
     this.getActionsList()
     this.getMatchList()
+    this.getTemplateAction()
   },
   methods: {
     getMatchList() {
@@ -258,29 +287,28 @@ export default {
         type: 'all'
       }).then(response => {
         this.matchList = response.data
-        this.total = response.page_info.total
       })
     },
     getActionsList() {
       this.listLoading = true
-      getActionsList(this.getListParams).then(response => {
-        console.log(response)
-        _.forEach(response.data, (atcion) => {
-          atcion.templateList = []
-        })
-        this.list = response.data
-        this.total = response.page_info.total
+      getActionsList().then(response => {
+        this.actionList = response.data
         this.listLoading = false
       })
     },
-    getTemplateList() {
-      this.listLoading = true
-      getTemplateList(this.getListParams).then(response => {
-      // getTemplateList().then(response => {
-        this.list = response.data
-        this.total = response.page_info.total
-        this.listLoading = false
+    getTemplateAction() {
+      getTemplateAction(this.getListParams).then(response => {
+        console.log(response)
+        if (response.code === 0) {
+          _.forEach(response.data, (template) => {
+            template.versionList = []
+          })
+          this.templateList = response.data
+        }
       })
+    },
+    actionChange() {
+      this.getTemplateAction()
     },
     getVideoList() {
       getVideoList(this.getListParams).then(response => {
@@ -325,23 +353,24 @@ export default {
     },
     startMath() {
       this.templateMatchVisible = true
-      this.loading = this.$loading({
+      this.templateMatchLoading = this.$loading({
         fullscreen: true,
         text: '匹配模板中...'
       })
       templateMatchTest({
         task_name: this.templateMatchForm.task_name,
         video_id: _.map(this.selectedVideoList, 'id'),
-        action_template_id: _.map(this.multipleSelection, 'id')
+        // action_template_id: _.map(this.multipleSelection, 'id'),
+        template_version_id: _.map(this.multipleSelection, 'version_id')
       }).then(response => {
         console.log(response)
         this.templateMatchVisible = false
         // setParts(response)
-        this.loading.close()
+        this.templateMatchLoading.close()
         this.$router.push('/templates/mathResult?task_match_id=' + response.data.task_match_id)
         // this.$router.push({ name: 'mathResult' })
       }).catch((response) => {
-        this.loading.close()
+        this.templateMatchLoading.close()
       })
     },
     addAction() {
@@ -353,18 +382,18 @@ export default {
         }
       })
     },
-    expandChange(row, expandedRows) {
-      getTemplateAction({
-        action_id: row.id
+    templateChange(row, expandedRows) {
+      getVersions({
+        task_id: row.task_id
       }).then(response => {
-        console.log(response)
         if (response.code === 0) {
-          row.templateList = response.data
+          row.versionList = response.data
         }
       })
     },
-    toStep4(row) {
-      this.$router.push('/video/step4?video_id=' + row.video_id + '&task_id=' + row.task_id + '&reid=' + row.reid)
+    toStep4(row, versionRow) {
+      // this.$router.push('/video/step4?video_id=' + row.video_id + '&task_id=' + row.task_id + '&reid=' + row.reid)
+      this.$router.push('/video/step4?video_id=' + row.video_id + '&task_id=' + row.task_id + '&reid=' + row.reid + '&version_id=' + versionRow.version_id)
     },
     querySearch(queryString, cb) {
       console.log(queryString)
@@ -378,6 +407,40 @@ export default {
       return (match) => {
         return (match.task_match_name.toLowerCase().indexOf(queryString.toLowerCase()) === 0)
       }
+    },
+    getVersionList(row) {
+      getVersions({
+        task_id: row.task_id
+      }).then(response => {
+        console.log(response)
+        if (response.code === 0) {
+          this.versionList = response.data
+        }
+      })
+    },
+    deleteTemplate() {
+      this.$confirm('此操作将永久模板版本, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deleteVersion({
+          version_id: _.map(this.multipleSelection, 'version_id')
+        }).then(response => {
+          if (response.code === 0) {
+            this.$message({
+              type: 'success',
+              message: '删除成功'
+            })
+            this.getTemplateAction()
+          }
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
     }
   }
 }

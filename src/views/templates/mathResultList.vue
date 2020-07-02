@@ -34,17 +34,19 @@
           {{ scope.row.task_match_status | statusFilter }}
         </template>
       </el-table-column>
-      <el-table-column label="模板个数" width="110" align="center">
+      <el-table-column label="版本个数" width="110" align="center">
         <template slot-scope="scope">
           <el-popover
             placement="right"
-            width="500"
+            width="550"
             trigger="click"
           >
             <el-table :data="scope.row.templates">
-              <el-table-column property="name" label="名称" />
+              <el-table-column property="name" label="模板名称" />
+              <el-table-column property="version_name" label="版本名称" />
+              <el-table-column property="version_desc" label="版本描述" />
               <el-table-column width="170" property="create_time" label="创建时间" />
-              <el-table-column width="130" property="reid" label="人物REID" />
+              <el-table-column width="140" property="reid" label="人物REID" />
             </el-table>
             <el-link slot="reference" type="primary">{{ scope.row.template_count }}</el-link>
           </el-popover>
@@ -66,6 +68,15 @@
           </el-popover>
         </template>
       </el-table-column>
+      <el-table-column
+        fixed="right"
+        label="操作"
+        width="100"
+      >
+        <template slot-scope="scope">
+          <el-button type="text" size="small" :disabled="scope.row.task_match_status !== '2' && scope.row.task_match_status !== '-100'" @click="reRun(scope.row)">重新匹配</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <el-pagination
@@ -75,12 +86,32 @@
       :total="total"
       @current-change="pageChange"
     />
+
+    <el-dialog title="匹配任务" :visible.sync="templateMatchVisible">
+      <el-form :model="templateMatchForm" label-width="100px">
+        <el-form-item label="匹配名称">
+          <el-autocomplete
+            v-model="templateMatchForm.task_name"
+            class="inline-input"
+            autocomplete="off"
+            :fetch-suggestions="querySearch"
+            value-key="task_match_name"
+            placeholder="请输入内容"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="templateMatchVisible = false">取 消</el-button>
+        <el-button type="primary" @click="startMath()">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { getVideoList, preClassify, postKeyPeople } from '@/api/video'
-import { getMatchList } from '@/api/templates'
+import { getMatchList, templateMatchTest } from '@/api/templates'
+import _ from 'lodash'
 
 export default {
   filters: {
@@ -111,11 +142,17 @@ export default {
       },
       list: null,
       listLoading: true,
-      total: 0
+      total: 0,
+      templateMatchVisible: false,
+      templateMatchForm: {
+        task_name: ''
+      },
+      matchList: []
     }
   },
   created() {
     this.getMatchList()
+    this.getAllMatchList()
   },
   methods: {
     getMatchList() {
@@ -126,9 +163,50 @@ export default {
         this.listLoading = false
       })
     },
+    getAllMatchList() {
+      getMatchList({
+        type: 'all'
+      }).then(response => {
+        this.matchList = response.data
+      })
+    },
     pageChange(page) {
       this.getListParams.page = page
       this.getMatchList()
+    },
+    reRun(row) {
+      this.reRunRow = row
+      this.templateMatchForm.task_name = row.task_match_name
+      this.templateMatchVisible = true
+    },
+    querySearch(queryString, cb) {
+      console.log(queryString)
+      var matchList = this.matchList
+      var results = queryString ? matchList.filter(this.createFilter(queryString)) : matchList
+      // 调用 callback 返回建议列表的数据
+      cb(results)
+    },
+    createFilter(queryString) {
+      return (match) => {
+        return (match.task_match_name.toLowerCase().indexOf(queryString.toLowerCase()) === 0)
+      }
+    },
+    startMath() {
+      this.loading = this.$loading({
+        fullscreen: true,
+        text: '匹配模板中...'
+      })
+      templateMatchTest({
+        task_name: this.templateMatchForm.task_name,
+        video_id: _.map(this.reRunRow.videos, 'id'),
+        template_version_id: _.map(this.reRunRow.templates, 'version_id')
+      }).then(response => {
+        this.templateMatchVisible = false
+        this.loading.close()
+        this.$router.push('/templates/mathResult?task_match_id=' + response.data.task_match_id)
+      }).catch((response) => {
+        this.loading.close()
+      })
     }
   }
 }

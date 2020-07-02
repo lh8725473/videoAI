@@ -1,8 +1,8 @@
 <template>
   <div class="app-container mathResult">
     <div class="reult-info">{{ reultInfo.task_match_name }}</div>
-    <el-tabs v-model="activeTemplateId" type="card" @tab-click="templateChange">
-      <el-tab-pane v-for="template in templateList" :key="template.id" :label="'模板:' + template.name" :name="template.id + ''" />
+    <el-tabs v-model="version_id" type="card" @tab-click="templateChange">
+      <el-tab-pane v-for="template in templateList" :key="template.version_id" :label="'模板:' + template.name + ' - v' + template.version_name " :name="template.version_id" />
     </el-tabs>
     <el-tabs v-model="activeVideoId" @tab-click="videoChange">
       <el-tab-pane v-for="video in videoList" :key="video.video_id" :label="video.video_name" :name="video.video_id + ''" />
@@ -111,6 +111,7 @@ export default {
     return {
       reultInfo: {},
       activeTemplateId: null,
+      version_id: null,
       activeReid: null,
       templateList: [],
       templateVideoId: null,
@@ -154,6 +155,7 @@ export default {
       }
     })
     this.$socket.on('template_match', (res) => {
+      console.log('template_match')
       console.log(res)
       if (res.task_match_status === '2') {
         console.log(loading)
@@ -172,6 +174,8 @@ export default {
   },
   beforeDestroy() {
     this.$socket.removeListener('preview_key_frame')
+    this.$socket.removeListener('play_msg')
+    this.$socket.removeListener('template_match')
   },
   methods: {
     getMatchSecond() {
@@ -191,6 +195,7 @@ export default {
             this.templateList = this.reultInfo.match_task_detail
             this.activeTemplateId = this.templateList[0].id + ''
             this.templateVideoId = this.templateList[0].video_id
+            this.version_id = this.templateList[0].version_id
             this.activeReid = this.templateList[0].reid
             this.videoList = this.templateList[0].video_list
             this.activeVideoId = this.videoList[0].video_id + ''
@@ -217,6 +222,7 @@ export default {
       this.templateVideoId = this.templateList[template.index].video_id
       this.activeReid = this.templateList[template.index].reid
       this.videoList = this.templateList[template.index].video_list
+      this.version_id = this.templateList[template.index].version_id
       this.activeVideoId = this.videoList[0].video_id + ''
       this.getVideoInfo(this.activeVideoId, 'match')
       this.getVideoInfo(this.templateVideoId, 'template')
@@ -231,8 +237,9 @@ export default {
       console.log('getMatchTaskDetail')
       getMatchTaskDetail({
         task_match_id: this.reultInfo.task_match_id,
-        action_template_id: this.activeTemplateId,
-        video_id: this.activeVideoId
+        // action_template_id: this.activeTemplateId,
+        video_id: this.activeVideoId,
+        version_id: this.version_id
       }).then(response => {
         console.log(response)
         if (response.code === 0) {
