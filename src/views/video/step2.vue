@@ -16,7 +16,7 @@
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 132px;top: 2px; z-index: 2;" :disabled="btnsDis.merge" @click="mergePart()">合 并</el-button>
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 198px;top: 2px; z-index: 2;" @click="addPart()">增 加</el-button>
         <el-tabs v-model="activePeople" type="card" @tab-click="handleClick">
-          <el-tab-pane v-for="(item, index) in result" :key="index" :label="item.people_number + ''" :name="item.people_number + ''" />
+          <el-tab-pane v-for="(item, index) in result" :key="index" :label="'任务ID:' + item.people_number" :name="item.people_number + ''" />
         </el-tabs>
         <el-row>
           <el-col :span="6">动作名</el-col>
@@ -53,8 +53,8 @@
               {{ item.start_time | timeFilter(item, fps) }}
             </el-col>
             <el-col :offset="1" :span="1">
-              <i class="el-icon-video-play" @click="playVideo(item)" />
-              <!-- <i class="el-icon-video-pause" @click="pauseVideo(item)" /> -->
+              <i v-show="!item.play" class="el-icon-video-play" @click="playVideo(item)" />
+              <i v-show="item.play" class="el-icon-video-pause" @click="pauseVideo(item)" />
             </el-col>
           </el-row>
         </draggable>
@@ -95,14 +95,14 @@
           {{ scope.row.name }}
         </template>
       </el-table-column>
-      <el-table-column label="开始/结束帧" width="100">
+      <el-table-column label="开始" width="100">
         <template slot-scope="scope">
-          {{ scope.row.start_frame_index }} 至 {{ scope.row.end_frame_index }}
+          {{ scope.row.start_frame_index }}
         </template>
       </el-table-column>
-      <el-table-column label="开始/结束帧" width="100">
+      <el-table-column label="开始帧" width="100">
         <template slot-scope="scope">
-          {{ scope.row.start_frame_index }} 至 {{ scope.row.end_frame_index }}
+          {{ scope.row.end_frame_index }}
         </template>
       </el-table-column>
       <el-table-column label="人物REID" width="100">
@@ -181,8 +181,8 @@ export default {
       preClassifyList: [],
       url: '',
       btnsDis: {
-        delete: false,
-        merge: false
+        delete: true,
+        merge: true
       },
       currentFrameIndex: 1
     }
@@ -201,6 +201,7 @@ export default {
           this.part = this.result[0].part
           _.forEach(this.part, (item) => {
             this.$set(item, 'checked', false)
+            this.$set(item, 'play', false)
           })
           this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_img
         }
@@ -238,6 +239,7 @@ export default {
           this.part = this.result[0].part
           _.forEach(this.part, (item) => {
             this.$set(item, 'checked', false)
+            this.$set(item, 'play', false)
           })
           this.url = process.env.VUE_APP_BASE_API + this.result[0].reid_img
         }
@@ -257,6 +259,7 @@ export default {
       })
     },
     playVideo(item) {
+      item.play = true
       const videoDom = this.$refs.video
       const start = (item.start_frame_index / this.fps)
       const end = (item.end_frame_index / this.fps)
@@ -270,7 +273,8 @@ export default {
       videoDom.addEventListener('timeupdate', fun)
       videoDom.play()
     },
-    pauseVideo() {
+    pauseVideo(item) {
+      item.play = false
       const videoDom = this.$refs.video
       videoDom.pause()
     },
@@ -314,7 +318,8 @@ export default {
         end_frame_index: '',
         start_time: 0,
         end_time: 0,
-        checked: false
+        checked: false,
+        play: false
       })
       this.taskInfo.data[0].part = this.part
     },
@@ -336,6 +341,9 @@ export default {
       this.taskInfo.data[0].part = this.part
     },
     checkedChange() {
+      console.log(_.filter(this.part, { 'checked': true }).length)
+      this.btnsDis.delete = !(_.filter(this.part, { 'checked': true }).length > 0)
+      this.btnsDis.merge = !(_.filter(this.part, { 'checked': true }).length > 1)
     }
   }
 }
@@ -364,6 +372,12 @@ export default {
     font-size: 20px;
     line-height: 28px;
     color: #409EFF;
+    cursor: pointer;
+  }
+  .el-icon-video-pause{
+    font-size: 20px;
+    line-height: 28px;
+    color: #F56C6C;
     cursor: pointer;
   }
   .loading-div{

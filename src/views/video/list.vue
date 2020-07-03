@@ -106,10 +106,9 @@
     />
 
     <el-dialog title="上传文件" :visible.sync="uploadVisible">
-      <el-form ref="uploadForm" :model="uploadForm" label-width="80px">
-        <el-form-item label="模板类型" prop="fileName">
-          <el-input v-model="uploadForm.fileName" placeholder="请输入内容" class="input-with-select">
-            <!-- <el-button slot="append" type="primary" icon="el-icon-upload">选择文件</el-button> -->
+      <el-form ref="uploadForm" :rules="uploadRules" :model="uploadForm" label-width="80px">
+        <el-form-item label="模板名称" prop="fileName">
+          <el-input v-model="uploadForm.fileName" placeholder="请上传一个.MP4格式文件" class="input-with-select" readonly>
             <el-upload
               slot="append"
               ref="upload"
@@ -119,20 +118,22 @@
               :show-file-list="false"
               :on-success="uploadSuccess"
               :on-change="fileChange"
+              :multiple="false"
               :auto-upload="false"
               accept=".mp4"
+              :file-list="fileList"
             >
               <el-button size="small" type="primary" icon="el-icon-upload">选择文件</el-button>
             </el-upload>
           </el-input>
         </el-form-item>
-        <el-form-item label="模板类型" prop="function">
+        <el-form-item label="分析类型" prop="function">
           <el-checkbox-group v-model="uploadForm.function">
             <el-checkbox label="1" name="type">视频提取</el-checkbox>
             <el-checkbox label="2" name="type">视频匹配</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
-        <el-form-item label="模板描述" prop="video_desc">
+        <el-form-item label="视频描述" prop="video_desc">
           <el-input
             v-model="uploadForm.video_desc"
             type="textarea"
@@ -185,12 +186,20 @@ export default {
       listLoading: true,
       total: 0,
       uploadVisible: false,
+      fileList: [],
       uploadForm: {
         function: [],
         fileName: '',
         video_desc: ''
+      },
+      uploadRules: {
+        fileName: [
+          { required: true, message: '请选择文件上传', trigger: 'blur' }
+        ],
+        function: [
+          { type: 'array', required: true, message: '请至少选择一个分析类型', trigger: 'change' }
+        ]
       }
-
     }
   },
   created() {
@@ -220,6 +229,11 @@ export default {
       }).then(response => {
         console.log(response)
         if (response.code === 0) {
+          this.$notify({
+            title: '视频开始分析',
+            message: '待视频分析完成后,可点击视频名称进行查看结果',
+            type: 'success'
+          })
           // this.$router.push('/video/step1?video_id=' + video.id)
         }
       })
@@ -251,17 +265,26 @@ export default {
       }
     },
     openUpload() {
-      // this.$refs['uploadForm'].resetFields()
+      this.fileList = []
       this.uploadVisible = true
       this.$nextTick(() => {
         this.$refs['uploadForm'].resetFields()
       })
     },
-    fileChange(file) {
+    fileChange(file, fileList) {
+      console.log(fileList)
       this.uploadForm.fileName = file.name
     },
     submitUploadVisible() {
-      this.$refs.upload.submit()
+      console.log('submitUploadVisible')
+      this.$refs.uploadForm.validate((valid) => {
+        if (valid) {
+          this.$refs.upload.submit()
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
     }
   }
 }

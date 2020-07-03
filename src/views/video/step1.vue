@@ -442,6 +442,14 @@ export default {
       this.$router.push('/video/step3?video_id=' + this.video_id + '&task_id=' + this.task_id)
     },
     updatePeople() {
+      if (!this.part.action_name) {
+        this.$message.error('模板名称不能为空')
+        return
+      }
+      if (!this.part.action_name) {
+        this.$message.error('任务别名不能为空')
+        return
+      }
       updatePeople(this.part).then(response => {
         if (response.code === 0) {
           this.$message('保存关键人物成功！')

@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container mathResult">
+  <div v-loading="mathResultLoading" class="app-container mathResult" element-loading-text="匹配结果生成中...">
     <div class="reult-info">{{ reultInfo.task_match_name }}</div>
     <el-tabs v-model="version_id" type="card" @tab-click="templateChange">
       <el-tab-pane v-for="template in templateList" :key="template.version_id" :label="'模板:' + template.name + ' - v' + template.version_name " :name="template.version_id" />
@@ -91,7 +91,7 @@ ImagePool.prototype.next = function() {
   }
 }
 
-let loading = null
+const loading = null
 
 export default {
   filters: {
@@ -110,6 +110,7 @@ export default {
   data() {
     return {
       reultInfo: {},
+      mathResultLoading: true,
       activeTemplateId: null,
       version_id: null,
       activeReid: null,
@@ -158,8 +159,7 @@ export default {
       console.log('template_match')
       console.log(res)
       if (res.task_match_status === '2') {
-        console.log(loading)
-        loading.close()
+        this.mathResultLoading = false
         this.getMatchSecond()
       }
     })
@@ -183,14 +183,10 @@ export default {
         task_match_id: this.task_match_id
       }).then(response => {
         if (response.code === 0) {
-          console.log(response)
           if (response.data.task_match_status !== '2') {
-            loading = this.$loading({
-              fullscreen: true,
-              text: '匹配结果生成中...'
-            })
-            console.log(loading)
+            this.mathResultLoading = true
           } else {
+            this.mathResultLoading = false
             this.reultInfo = response.data
             this.templateList = this.reultInfo.match_task_detail
             this.activeTemplateId = this.templateList[0].id + ''

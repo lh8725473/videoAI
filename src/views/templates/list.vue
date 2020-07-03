@@ -75,7 +75,7 @@
       />
       <el-table-column
         prop="reid"
-        label="人物REID"
+        label="人物ID"
         width="120"
       />
       <el-table-column
@@ -169,13 +169,13 @@
         </el-table-column>
       </el-table>
 
-      <!-- <el-pagination
+      <el-pagination
         background
         layout="prev, pager, next"
         :page-size="10"
-        :total="total"
-        @current-change="pageChange"
-      /> -->
+        :total="videoTotal"
+        @current-change="videopageChange"
+      />
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="videoListVisible = false">取 消</el-button>
@@ -184,7 +184,7 @@
     </el-dialog>
 
     <el-dialog title="增加标签" :visible.sync="addActionVisible">
-      <el-form :model="actionForm" label-width="100px">
+      <el-form :model="actionForm" :rules="actionRules" label-width="100px">
         <el-form-item label="标签名称">
           <el-input v-model="actionForm.action_name" autocomplete="off" />
         </el-form-item>
@@ -259,10 +259,15 @@ export default {
         per_page: 10,
         action_id: ''
       },
+      getVideoListParams: {
+        page: 1,
+        per_page: 10
+      },
       templateList: [],
       actionList: [],
       list: null,
       videoList: [],
+      videoTotal: 0,
       listLoading: true,
       total: 0,
       buttonDis: {
@@ -278,6 +283,14 @@ export default {
       actionForm: {
         action_name: '',
         action_desc: ''
+      },
+      actionRules: {
+        action_name: [
+          { required: true, message: '请输入分类名称', trigger: 'blur' }
+        ],
+        action_desc: [
+          { required: true, message: '请输入分类描述', trigger: 'blur' }
+        ]
       },
       templateMatchForm: {
         task_name: ''
@@ -322,8 +335,9 @@ export default {
       this.getTemplateAction()
     },
     getVideoList() {
-      getVideoList(this.getListParams).then(response => {
+      getVideoList(this.getVideoListParams).then(response => {
         this.videoList = response.data
+        this.videoTotal = response.page_info.total
       })
     },
     preClassify(video) {
@@ -339,10 +353,9 @@ export default {
       this.getListParams.page = page
       this.getTemplateList()
     },
-    uploadSuccess() {
-      this.$message('上传视频成功')
-      this.getListParams.page = 1
-      this.fetchData()
+    videopageChange(page) {
+      this.getVideoListParams.page = page
+      this.getVideoList()
     },
     handleSelectionChange(val) {
       this.multipleSelection = val
@@ -385,11 +398,18 @@ export default {
       })
     },
     addAction() {
-      addAction(this.actionForm).then(response => {
-        if (response.code === 0) {
-          this.$message('增加动作成功')
-          this.getActionsList()
-          this.addActionVisible = false
+      this.$refs.uploadForm.validate((valid) => {
+        if (valid) {
+          addAction(this.actionForm).then(response => {
+            if (response.code === 0) {
+              this.$message('增加分类成功')
+              this.getActionsList()
+              this.addActionVisible = false
+            }
+          })
+        } else {
+          console.log('error submit!!')
+          return false
         }
       })
     },
