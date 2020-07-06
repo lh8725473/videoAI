@@ -184,8 +184,8 @@
     </el-dialog>
 
     <el-dialog title="增加标签" :visible.sync="addActionVisible">
-      <el-form :model="actionForm" :rules="actionRules" label-width="100px">
-        <el-form-item label="标签名称">
+      <el-form ref="actionForm" :model="actionForm" :rules="actionRules" label-width="100px">
+        <el-form-item label="标签名称" prop="action_name">
           <el-input v-model="actionForm.action_name" autocomplete="off" />
         </el-form-item>
         <el-form-item label="标签描述">
@@ -286,10 +286,10 @@ export default {
       },
       actionRules: {
         action_name: [
-          { required: true, message: '请输入分类名称', trigger: 'blur' }
+          { required: true, message: '请输入标签名称', trigger: 'blur' }
         ],
         action_desc: [
-          { required: true, message: '请输入分类描述', trigger: 'blur' }
+          { required: true, message: '请输入标签描述', trigger: 'blur' }
         ]
       },
       templateMatchForm: {
@@ -328,6 +328,7 @@ export default {
             template.versionList = []
           })
           this.templateList = response.data
+          this.total = response.page_info.total
         }
       })
     },
@@ -398,7 +399,7 @@ export default {
       })
     },
     addAction() {
-      this.$refs.uploadForm.validate((valid) => {
+      this.$refs.actionForm.validate((valid) => {
         if (valid) {
           addAction(this.actionForm).then(response => {
             if (response.code === 0) {

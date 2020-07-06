@@ -95,12 +95,12 @@
           {{ scope.row.name }}
         </template>
       </el-table-column>
-      <el-table-column label="开始" width="100">
+      <el-table-column label="开始帧" width="100">
         <template slot-scope="scope">
           {{ scope.row.start_frame_index }}
         </template>
       </el-table-column>
-      <el-table-column label="开始帧" width="100">
+      <el-table-column label="结束帧" width="100">
         <template slot-scope="scope">
           {{ scope.row.end_frame_index }}
         </template>

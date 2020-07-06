@@ -293,7 +293,12 @@ export default {
           }
         })
         zr.add(image)
-        var bbox = data.pose[data.index].bbox
+        var bbox = null
+        if (data.pose_result) {
+          bbox = data.pose_result.bbox
+        } else {
+          bbox = data.pose[data.index].bbox
+        }
         var rectX = bbox[0] * (this.canvasWidth / img.width) + 2
         var rectY = y + bbox[1] * ((this.canvasHeight - 2 * y) / img.height) + 2
         var rectW = (bbox[2] - bbox[0]) * (this.canvasWidth / img.width)

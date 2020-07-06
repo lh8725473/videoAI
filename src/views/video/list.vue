@@ -10,7 +10,33 @@
       >
         <el-button size="small" type="primary">点击上传</el-button>
       </el-upload> -->
-      <el-button size="small" type="primary" icon="el-icon-upload" @click="openUpload">点击上传</el-button>
+      <el-form :inline="true" :model="getListParams" class="demo-form-inline" size="small">
+        <el-form-item label="视频名称">
+          <el-input v-model="getListParams.video_name" placeholder="视频名称" />
+        </el-form-item>
+        <el-form-item label="分析状态">
+          <el-select v-model="getListParams.status" placeholder="分析状态">
+            <el-option label="未开始" value="0" />
+            <el-option label="检测中" value="1" />
+            <el-option label="结束" value="2" />
+            <el-option label="等待中" value="10" />
+            <el-option label="等待中" value="-100" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="分析类型">
+          <el-select v-model="getListParams.function" placeholder="分析类型">
+            <el-option label="视频提取" value="1" />
+            <el-option label="视频匹配" value="2" />
+            <el-option label="视频提取/视频匹配" value="1,2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="fetchData()">查询</el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-upload" @click="openUpload">点击上传</el-button>
+        </el-form-item>
+      </el-form>
     </div>
     <el-table
       v-loading="listLoading"
@@ -107,7 +133,7 @@
 
     <el-dialog title="上传文件" :visible.sync="uploadVisible">
       <el-form ref="uploadForm" :rules="uploadRules" :model="uploadForm" label-width="80px">
-        <el-form-item label="模板名称" prop="fileName">
+        <el-form-item label="视频名称" prop="fileName">
           <el-input v-model="uploadForm.fileName" placeholder="请上传一个.MP4格式文件" class="input-with-select" readonly>
             <el-upload
               slot="append"
@@ -180,7 +206,10 @@ export default {
       uploadUrl: process.env.VUE_APP_BASE_API + '/video/upload',
       getListParams: {
         page: 1,
-        per_page: 10
+        per_page: 10,
+        video_name: null,
+        status: null,
+        function: null
       },
       list: null,
       listLoading: true,
@@ -277,9 +306,11 @@ export default {
     },
     submitUploadVisible() {
       console.log('submitUploadVisible')
+      console.log(this.uploadForm)
+      
       this.$refs.uploadForm.validate((valid) => {
         if (valid) {
-          this.$refs.upload.submit()
+          // this.$refs.upload.submit()
         } else {
           console.log('error submit!!')
           return false
