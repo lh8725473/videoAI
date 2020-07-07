@@ -323,6 +323,7 @@ export default {
     },
     resetData() {
       this.$refs.seachForm.resetFields()
+      this.fetchData()
     }
   }
 }
