@@ -9,7 +9,7 @@
           :value="action.id"
         />
       </el-select>
-      <el-button size="small" type="primary" @click="addActionVisible = true">增加标签</el-button>
+      <el-button size="small" type="primary" @click="openAddAction()">增加标签</el-button>
       <el-button size="small" type="primary" :disabled="buttonDis.templateMatch" @click="templateMatch()">模板匹配</el-button>
       <el-button size="small" type="primary" :disabled="buttonDis.templateMatch" @click="deleteTemplate()">删除</el-button>
     </div>
@@ -396,6 +396,12 @@ export default {
         // this.$router.push({ name: 'mathResult' })
       }).catch((response) => {
         this.templateMatchLoading.close()
+      })
+    },
+    openAddAction() {
+      this.addActionVisible = true
+      this.$nextTick(() => {
+        this.$refs.actionForm.resetFields()
       })
     },
     addAction() {

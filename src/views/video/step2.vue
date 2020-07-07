@@ -16,7 +16,7 @@
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 132px;top: 2px; z-index: 2;" :disabled="btnsDis.merge" @click="mergePart()">合 并</el-button>
         <el-button v-show="isEdit" size="small" type="primary" style="position:absolute;right: 198px;top: 2px; z-index: 2;" @click="addPart()">增 加</el-button>
         <el-tabs v-model="activePeople" type="card" @tab-click="handleClick">
-          <el-tab-pane v-for="(item, index) in result" :key="index" :label="'任务ID:' + item.people_number" :name="item.people_number + ''" />
+          <el-tab-pane v-for="(item, index) in result" :key="index" :label="'人物ID:' + item.people_number" :name="item.people_number + ''" />
         </el-tabs>
         <el-row>
           <el-col :span="6">动作名</el-col>
@@ -105,7 +105,7 @@
           {{ scope.row.end_frame_index }}
         </template>
       </el-table-column>
-      <el-table-column label="人物REID" width="100">
+      <el-table-column label="人物ID" width="100">
         <template slot-scope="scope">
           {{ scope.row.reid }}
         </template>
@@ -265,7 +265,9 @@ export default {
       const end = (item.end_frame_index / this.fps)
       var fun = () => {
         if (videoDom.currentTime >= end) {
+          console.log('videoDom.pause()')
           videoDom.pause()
+          item.play = false
           videoDom.removeEventListener('timeupdate', fun)
         }
       }

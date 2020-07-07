@@ -17,9 +17,9 @@
         <el-form-item label="分析状态" prop="status">
           <el-select v-model="seachParams.status" placeholder="分析状态">
             <el-option label="未开始" value="0" />
+            <el-option label="等待中" value="10" />
             <el-option label="检测中" value="1" />
             <el-option label="结束" value="2" />
-            <el-option label="等待中" value="10" />
             <el-option label="异常" value="-100" />
           </el-select>
         </el-form-item>
@@ -293,7 +293,9 @@ export default {
         this.fetchData()
       } else {
         this.$message.error(response.message)
-        this.$refs['uploadForm'].resetFields()
+        this.$nextTick(() => {
+          this.$refs['uploadForm'].resetFields()
+        })
       }
     },
     openUpload() {
@@ -306,10 +308,12 @@ export default {
     fileChange(file, fileList) {
       console.log(fileList)
       this.uploadForm.fileName = file.name
+      this.fileList = [file]
     },
     submitUploadVisible() {
       this.$refs.uploadForm.validate((valid) => {
         if (valid) {
+          this.uploadForm.function.sort()
           this.$refs.upload.submit()
         } else {
           console.log('error submit!!')
