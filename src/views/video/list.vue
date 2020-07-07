@@ -10,28 +10,31 @@
       >
         <el-button size="small" type="primary">点击上传</el-button>
       </el-upload> -->
-      <el-form :inline="true" :model="getListParams" class="demo-form-inline" size="small">
-        <el-form-item label="视频名称">
-          <el-input v-model="getListParams.video_name" placeholder="视频名称" />
+      <el-form ref="seachForm" :inline="true" :model="seachParams" class="demo-form-inline" size="small">
+        <el-form-item label="视频名称" prop="video_name">
+          <el-input v-model="seachParams.video_name" placeholder="视频名称" />
         </el-form-item>
-        <el-form-item label="分析状态">
-          <el-select v-model="getListParams.status" placeholder="分析状态">
+        <el-form-item label="分析状态" prop="status">
+          <el-select v-model="seachParams.status" placeholder="分析状态">
             <el-option label="未开始" value="0" />
             <el-option label="检测中" value="1" />
             <el-option label="结束" value="2" />
             <el-option label="等待中" value="10" />
-            <el-option label="等待中" value="-100" />
+            <el-option label="异常" value="-100" />
           </el-select>
         </el-form-item>
-        <el-form-item label="分析类型">
-          <el-select v-model="getListParams.function" placeholder="分析类型">
+        <el-form-item label="分析类型" prop="function">
+          <el-select v-model="seachParams.function" placeholder="分析类型">
             <el-option label="视频提取" value="1" />
             <el-option label="视频匹配" value="2" />
             <el-option label="视频提取/视频匹配" value="1,2" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchData()">查询</el-button>
+          <el-button type="primary" @click="fetchData()">查 询</el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="resetData()">重 置</el-button>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-upload" @click="openUpload">点击上传</el-button>
@@ -204,7 +207,7 @@ export default {
   data() {
     return {
       uploadUrl: process.env.VUE_APP_BASE_API + '/video/upload',
-      getListParams: {
+      seachParams: {
         page: 1,
         per_page: 10,
         video_name: null,
@@ -245,7 +248,7 @@ export default {
   methods: {
     fetchData() {
       this.listLoading = true
-      getVideoList(this.getListParams).then(response => {
+      getVideoList(this.seachParams).then(response => {
         console.log(response)
         this.list = response.data
         this.total = response.page_info.total
@@ -278,7 +281,7 @@ export default {
       })
     },
     pageChange(page) {
-      this.getListParams.page = page
+      this.seachParams.page = page
       this.fetchData()
     },
     uploadSuccess(response) {
@@ -286,7 +289,7 @@ export default {
       if (response.code === 0) {
         this.uploadVisible = false
         this.$message.success('上传视频成功')
-        this.getListParams.page = 1
+        this.seachParams.page = 1
         this.fetchData()
       } else {
         this.$message.error(response.message)
@@ -305,17 +308,17 @@ export default {
       this.uploadForm.fileName = file.name
     },
     submitUploadVisible() {
-      console.log('submitUploadVisible')
-      console.log(this.uploadForm)
-      
       this.$refs.uploadForm.validate((valid) => {
         if (valid) {
-          // this.$refs.upload.submit()
+          this.$refs.upload.submit()
         } else {
           console.log('error submit!!')
           return false
         }
       })
+    },
+    resetData() {
+      this.$refs.seachForm.resetFields()
     }
   }
 }
