@@ -12,7 +12,7 @@
         <template slot="title">
           <span class="tip">动作: {{ part.template_name }}</span>
           <span class="tip">匹配结果: {{ part.status | status }}</span>
-          <span class="tip">匹配率: {{ part.value * 100 }}%</span>
+          <span class="tip">匹配率: {{ parseFloat((part.value * 100).toFixed(2)) }}%</span>
         </template>
         <el-row>
           <div class="scroll-warp">
@@ -38,7 +38,8 @@
                   <el-col :span="12">帧间距: {{ img.frame_distance }}</el-col>
                   <el-col :span="12">帧间时间: {{ img.frame_time }}s</el-col>
                   <el-col :span="12">帧间分数: {{ img.interframe_value }}</el-col>
-                  <el-col :span="12">相似率: {{ (img.match_rate * 100).toFixed(2) }}%</el-col>
+                  <el-col v-show="img.match_rate" :span="12">相似率: {{ parseFloat((img.match_rate * 100).toFixed(2)) }}%</el-col>
+                  <el-col v-show="!img.match_rate" :span="12">相似率: 0%</el-col>
                 </el-row>
               </div>
             </template>

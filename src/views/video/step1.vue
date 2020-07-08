@@ -21,7 +21,7 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="8" style="line-height: 36px;">
+          <el-col :span="8" class="reid-name" style="line-height: 36px;">
             模板名称:
           </el-col>
           <el-col :offset="1" :span="12">
@@ -29,7 +29,7 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="8" style="line-height: 36px;">
+          <el-col :span="8" class="reid-name" style="line-height: 36px;">
             人物别名:
           </el-col>
           <el-col :offset="1" :span="12">
@@ -176,7 +176,6 @@ export default {
     this.task_id = this.$route.query.task_id
     this.getVideoInfo()
     this.getPeoples()
-    console.log(zrender)
   },
   mounted() {
     // 设置canvasWidth
@@ -275,11 +274,16 @@ export default {
         if (img.width < this.canvasWidth) {
           this.canvasWidth = img.width
         }
-        if (img.width > img.height) { // 长方形
+        if (img.width > img.height) { // 款的(横着)
           x = 0
           width = this.canvasWidth
           height = width / (img.width / img.height)
           y = (480 - height) / 2
+        } else { // 高的(竖着)
+          height = 480
+          width = height / (img.height / img.width)
+          x = (this.canvasWidth - width) / 2
+          y = 0
         }
         var image = new zrender.Image({
           position: [1, 1],
@@ -299,10 +303,22 @@ export default {
         } else {
           bbox = data.pose[data.index].bbox
         }
-        var rectX = bbox[0] * (this.canvasWidth / img.width) + 2
-        var rectY = y + bbox[1] * ((this.canvasHeight - 2 * y) / img.height) + 2
-        var rectW = (bbox[2] - bbox[0]) * (this.canvasWidth / img.width)
-        var rectH = (bbox[3] - bbox[1]) * ((this.canvasHeight - 2 * y) / img.height)
+        var rectX = 0
+        var rectY = 0
+        var rectW = 0
+        var rectH = 0
+        if (img.width > img.height) {
+          rectX = bbox[0] * (this.canvasWidth / img.width) + 2
+          rectY = y + bbox[1] * ((this.canvasHeight - 2 * y) / img.height) + 2
+          rectW = (bbox[2] - bbox[0]) * (this.canvasWidth / img.width)
+          rectH = (bbox[3] - bbox[1]) * ((this.canvasHeight - 2 * y) / img.height)
+        } else {
+          rectX = x + bbox[0] * ((this.canvasWidth - 2 * x) / this.canvasWidth) + 2
+          rectY = bbox[1] * (this.canvasHeight / img.height) + 2
+          rectW = (bbox[2] - bbox[0]) * ((this.canvasWidth - 2 * x) / img.width)
+          rectH = (bbox[3] - bbox[1]) * (this.canvasHeight / img.height)
+        }
+
         var rect = new zrender.Rect({
           style: {
             fill: 'transparent',
@@ -375,6 +391,9 @@ export default {
       })
     },
     preFrameIndex() {
+      if ((parseInt(this.formInline.curFrameIndex) - parseInt(this.formInline.step)) < 1) {
+        return
+      }
       this.formInline.curFrameIndex = parseInt(this.formInline.curFrameIndex) - parseInt(this.formInline.step)
       // this.$socket.emit('show_frame', {
       //   'task_id': this.task_id,
@@ -451,8 +470,8 @@ export default {
         this.$message.error('模板名称不能为空')
         return
       }
-      if (!this.part.action_name) {
-        this.$message.error('任务别名不能为空')
+      if (!this.part.another_name) {
+        this.$message.error('人物别名不能为空')
         return
       }
       updatePeople(this.part).then(response => {
@@ -604,6 +623,11 @@ export default {
 }
 .el-input.is-disabled .el-input__inner{
   color: #303133;
+}
+.reid-name:before{
+  content: '*';
+  color: #F56C6C;
+  margin-right: 1px;
 }
 </style>
 

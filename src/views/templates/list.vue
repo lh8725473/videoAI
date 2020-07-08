@@ -26,7 +26,7 @@
             :data="versionProps.row.versionList"
             style="width: 100%"
             border
-            @selection-change="handleSelectionChange"
+            @selection-change="(props) => handleSelectionChange(props, versionProps.row)"
           >
             <el-table-column
               type="selection"
@@ -297,7 +297,8 @@ export default {
       },
       selectedVideoList: [],
       matchList: [],
-      versionList: []
+      versionList: [],
+      selectedObj: {}
     }
   },
   created() {
@@ -358,8 +359,12 @@ export default {
       this.getVideoListParams.page = page
       this.getVideoList()
     },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
+    handleSelectionChange(val, task) {
+      this.selectedObj[task.task_id] = val
+      this.multipleSelection = []
+      _.forEach(this.selectedObj, (vaule, key) => {
+        this.multipleSelection = this.multipleSelection.concat(vaule)
+      })
       this.buttonDis.templateMatch = !(this.multipleSelection.length > 0)
       // this.buttonDis.templateMatch = !(this.multipleSelection.length === 1)
     },
