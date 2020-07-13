@@ -353,7 +353,7 @@ export default {
     },
     pageChange(page) {
       this.getListParams.page = page
-      this.getTemplateList()
+      this.getTemplateAction()
     },
     videopageChange(page) {
       this.getVideoListParams.page = page
