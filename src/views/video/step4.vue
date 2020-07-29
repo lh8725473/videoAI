@@ -606,26 +606,32 @@ export default {
             r: 3
           },
           draggable: true,
-          z: 4
+          z: 9
         })
         boneArea.group.add(circle)
         boneArea.curPoints.push(circle)
 
-        // circle.on('drag', (e) => {
-        //   // console.log(e.event.zrX, e.event.zrY)
-        //   boneArea.polygon.attr({
-        //     shape: {
-        //       points: points
-        //     }
-        //   })
-        // })
+        circle.on('drag', (e) => {
+          // console.log(e.event.zrX, e.event.zrY)
+          var points = boneArea.curPoints.map(curPoint => {
+            return [curPoint.shape.cx + curPoint.position[0], curPoint.shape.cy + curPoint.position[1]]
+          })
+          boneArea.poly = boneArea.curPoints.map(point => {
+            return [parseInt(((point.shape.cx + point.position[0]) * this.videoInfo.width / 540).toFixed(0)), parseInt(((point.shape.cy + point.position[1]) * this.videoInfo.height / 400).toFixed(0))]
+          })
+          boneArea.polygon.attr({
+            shape: {
+              points: points
+            }
+          })
+        })
 
         if (boneArea.curPoints.length > 2) {
           var points = boneArea.curPoints.map(curPoint => {
-            return [curPoint.shape.cx, curPoint.shape.cy]
+            return [curPoint.shape.cx + curPoint.position[0], curPoint.shape.cy + curPoint.position[1]]
           })
-          boneArea.poly = points.map(point => {
-            return [parseInt((point[0] * this.videoInfo.width / 540).toFixed(0)), parseInt((point[1] * this.videoInfo.height / 400).toFixed(0))]
+          boneArea.poly = boneArea.curPoints.map(point => {
+            return [parseInt(((point.shape.cx + point.position[0]) * this.videoInfo.width / 540).toFixed(0)), parseInt(((point.shape.cy + point.position[1]) * this.videoInfo.height / 400).toFixed(0))]
           })
           if (boneArea.polygon) {
             boneArea.group.remove(boneArea.polygon)
@@ -637,7 +643,7 @@ export default {
             style: {
               opacity: 0.5
             },
-            z: 9
+            z: 8
           })
           boneArea.group.add(boneArea.polygon)
         }
