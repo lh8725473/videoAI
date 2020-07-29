@@ -87,3 +87,19 @@ export function deriveTask(data) {
     data
   })
 }
+
+export function getPosePoints(params) {
+  return request({
+    url: '/template/pose_point',
+    method: 'get',
+    params
+  })
+}
+
+export function getPointDistance(params) {
+  return request({
+    url: '/template/point_distance',
+    method: 'get',
+    params
+  })
+}

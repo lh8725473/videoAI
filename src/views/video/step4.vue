@@ -27,15 +27,32 @@
             <el-row>
               <el-col :span="12">
                 <el-image
-                  style="width: 100%; height: 300px"
+                  style="width: 100%; height: 400px"
                   :src="imgDetail.full_frame_path"
                   fit="contain"
                 />
+                <div :ref="'canvasDiv' + imgDetail.frame_index" style="width: 100%; height: 400px" />
                 <div style="text-align: center;">
                   <span>人物重心坐标:{{ imgDetail.features.gravity_center }} </span>
                   <el-button size="mini" type="primary" @click="resetData(imgDetail, part)">还原系统结果</el-button>
                 </div>
-                <div>关键帧描述: {{imgDetail.key_frame_desc}}</div>
+                <el-row>
+                  <el-col :span="8">
+                    连续帧数:
+                  </el-col>
+                  <el-col :offset="1" :span="11">
+                    <el-input v-model="imgDetail.features.constantly_frame[0]" size="mini" />
+                  </el-col>
+                </el-row>
+                <el-row>
+                  <el-col :span="8">
+                    最小出现帧数:
+                  </el-col>
+                  <el-col :offset="1" :span="11">
+                    <el-input v-model="imgDetail.features.constantly_frame[1]" size="mini" />
+                  </el-col>
+                </el-row>
+                <div>关键帧描述: {{ imgDetail.key_frame_desc }}</div>
               </el-col>
               <el-col v-if="imgDetail.features" :span="12">
                 <el-tabs v-model="stringdsad" type="card">
@@ -65,10 +82,10 @@
                         <el-input v-model="item.value" size="mini" />
                       </el-col>
                       <el-col :offset="1" :span="4">
-                        <el-input v-model="item.threshold" @change="computedFeaturesCount(imgDetail.features)" size="mini" />
+                        <el-input v-model="item.threshold" size="mini" @change="computedFeaturesCount(imgDetail.features)" />
                       </el-col>
                       <el-col :offset="1" :span="4">
-                        <el-input v-model="item.weight" @change="computedFeaturesCount(imgDetail.features)" size="mini" />
+                        <el-input v-model="item.weight" size="mini" @change="computedFeaturesCount(imgDetail.features)" />
                       </el-col>
                     </el-row>
                   </el-tab-pane>
@@ -95,10 +112,10 @@
                         <el-input v-model="item.value" size="mini" />
                       </el-col>
                       <el-col :offset="1" :span="4">
-                        <el-input v-model="item.threshold" @change="computedFeaturesCount(imgDetail.features)" size="mini" />
+                        <el-input v-model="item.threshold" size="mini" @change="computedFeaturesCount(imgDetail.features)" />
                       </el-col>
                       <el-col :offset="1" :span="4">
-                        <el-input v-model="item.weight" @change="computedFeaturesCount(imgDetail.features)" size="mini" />
+                        <el-input v-model="item.weight" size="mini" @change="computedFeaturesCount(imgDetail.features)" />
                       </el-col>
                     </el-row>
                   </el-tab-pane>
@@ -135,6 +152,86 @@
                       <el-col :offset="1" :span="4">
                         <el-input v-model="item.weight" size="mini" />
                       </el-col>
+                    </el-row>
+                  </el-tab-pane>
+                  <el-tab-pane label="非相邻骨骼点距离" name="非相邻骨骼点距离">
+                    <el-row>
+                      <el-col :span="3">距离(px)</el-col>
+                      <el-col :offset="1" :span="4">起始点</el-col>
+                      <el-col :offset="1" :span="4">结束点</el-col>
+                      <el-col :offset="1" :span="4">阈值(±0.5)
+                        <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
+                          <i class="el-icon-warning-outline" />
+                        </el-tooltip>
+                      </el-col>
+                      <el-col :offset="1" :span="4">权重(0-1)
+                        <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
+                          <i class="el-icon-warning-outline" />
+                        </el-tooltip>
+                      </el-col>
+                    </el-row>
+                    <el-row v-for="(item, index) in imgDetail.features.bone_distance" :key="index">
+                      <el-col :span="3">
+                        <el-input v-model="item.value" size="mini" />
+                      </el-col>
+                      <el-col :offset="1" :span="4">
+                        <el-select v-model="item.key[0]" placeholder="起始点" size="mini" @change="posePointChange(item, imgDetail)">
+                          <el-option v-for="(posePoint, key) in posePoints" :key="key" :label="posePoint" :value="key" />
+                        </el-select>
+                      </el-col>
+                      <el-col :offset="1" :span="4">
+                        <el-select v-model="item.key[1]" placeholder="结束点" size="mini" @change="posePointChange(item, imgDetail)">
+                          <el-option v-for="(posePoint, key) in posePoints" :key="key" :label="posePoint" :value="key" />
+                        </el-select>
+                      </el-col>
+                      <el-col :offset="1" :span="4">
+                        <el-input v-model="item.threshold" size="mini" />
+                      </el-col>
+                      <el-col :offset="1" :span="4">
+                        <el-input v-model="item.weight" size="mini" />
+                      </el-col>
+                    </el-row>
+                    <el-row>
+                      <el-button size="mini" type="primary" @click="addBoneDistance(imgDetail.features.bone_distance)">增加非相邻骨骼点距离</el-button>
+                    </el-row>
+                  </el-tab-pane>
+                  <el-tab-pane label="骨骼点与区域数据" name="骨骼点与区域数据">
+                    <el-row>
+                      <el-col :span="3">距离(px)</el-col>
+                      <el-col :offset="1" :span="4">骨骼点</el-col>
+                      <el-col :offset="1" :span="4">阈值(±0.5)
+                        <el-tooltip class="item" effect="dark" content="长度的阈值是一个比值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±0.5" placement="top-start">
+                          <i class="el-icon-warning-outline" />
+                        </el-tooltip>
+                      </el-col>
+                      <el-col :offset="1" :span="4">权重(0-1)
+                        <el-tooltip class="item" effect="dark" content="权重 0-1" placement="top-start">
+                          <i class="el-icon-warning-outline" />
+                        </el-tooltip>
+                      </el-col>
+                    </el-row>
+                    <el-row v-for="(item, index) in imgDetail.features.bone_area" :key="index">
+                      <el-col :span="3">
+                        <el-input v-model="item.value" size="mini" />
+                      </el-col>
+                      <el-col :offset="1" :span="4">
+                        <el-select v-model="item.key" placeholder="骨骼点" size="mini" @change="posePointChange(item, imgDetail)">
+                          <el-option v-for="(posePoint, key) in posePoints" :key="key" :label="posePoint" :value="key" />
+                        </el-select>
+                      </el-col>
+                      <el-col :offset="1" :span="4">
+                        <el-input v-model="item.threshold" size="mini" />
+                      </el-col>
+                      <el-col :offset="1" :span="4">
+                        <el-input v-model="item.weight" size="mini" />
+                      </el-col>
+                      <el-col :offset="1" :span="4">
+                        <el-button size="mini" type="primary" @click="editBoneArea(item, imgDetail)">编辑</el-button>
+                        <el-button size="mini" type="primary" @click="clearBoneArea(item, imgDetail)">重置</el-button>
+                      </el-col>
+                    </el-row>
+                    <el-row>
+                      <el-button size="mini" type="primary" @click="addBoneArea(imgDetail.features.bone_area)">骨骼点与区域数据</el-button>
                     </el-row>
                   </el-tab-pane>
                 </el-tabs>
@@ -180,9 +277,10 @@
 
 <script>
 import { Sortable, Swap } from 'sortablejs/modular/sortable.core.esm'
-import { getKeyFrames, getFrameFeature, createTemplate, getTemplate, drawImage, templateSave, getActionsList, archive } from '@/api/video'
-import { saveTemplate } from '@/api/templates'
+import { getKeyFrames, getFrameFeature, createTemplate, getTemplate, drawImage, templateSave, getActionsList, archive, getVideoInfo } from '@/api/video'
+import { saveTemplate, getPosePoints, getPointDistance } from '@/api/templates'
 // import { fabric } from 'fabric'
+import zrender from 'zrender'
 import _ from 'lodash'
 // const { fabric } = require('fabric')
 
@@ -220,7 +318,8 @@ export default {
       versionDesVisible: false,
       versionDesForm: {
         version_desc: ''
-      }
+      },
+      posePoints: []
     }
   },
   created() {
@@ -234,6 +333,8 @@ export default {
     //   background: 'rgba(0, 0, 0, 0.7)'
     // })
     this.getKeyFrames()
+    this.getPosePoints()
+    this.getVideoInfo()
   },
   mounted() {
     // this.$socket.on('frame_template', (res) => {
@@ -243,6 +344,7 @@ export default {
     //     frame.template.features = res.data.features
     //   }
     // })
+    // this.zr = zrender.init(this.$refs.canvasDiv.$el)
     this.$socket.on('template_status', (res) => {
       console.log('template_status')
       console.log(res)
@@ -252,6 +354,22 @@ export default {
     })
   },
   methods: {
+    getVideoInfo() {
+      getVideoInfo({
+        video_id: this.video_id
+      }).then(response => {
+        response.data.width = response.data.resolution.split('*')[0]
+        response.data.height = response.data.resolution.split('*')[1]
+        this.videoInfo = response.data
+      })
+    },
+    getPosePoints() {
+      getPosePoints()
+        .then(response => {
+          this.posePoints = response.data
+          console.log(response)
+        })
+    },
     getKeyFrames() {
       getKeyFrames({
         video_id: this.video_id,
@@ -341,6 +459,21 @@ export default {
           part.templateDetail.push(response.data)
           part.activeImg = response.data.frame_index + ''
           this.templateDetailList.push(response.data)
+          // this.$nextTick(() => {
+          //   response.data.zr = zrender.init(this.$refs['canvasDiv' + img.frame_index][0])
+          //   response.data.curPoints = []
+          //   response.data.zImage = new zrender.Image({
+          //     scale: [1, 1],
+          //     style: {
+          //       x: 0,
+          //       y: 0,
+          //       image: response.data.full_frame_path,
+          //       width: 520,
+          //       height: 400
+          //     }
+          //   })
+          //   response.data.zr.add(response.data.zImage)
+          // })
         }
       })
     },
@@ -391,8 +524,21 @@ export default {
       this.versionDesVisible = true
     },
     saveTemplate() {
+      console.log(this.templateDetailList)
+      const postTemplateDetailList = _.cloneDeep(this.templateDetailList)
+
+      _.forEach(postTemplateDetailList, postTemplateDetail => {
+        _.forEach(postTemplateDetail.features.bone_area, item => {
+          delete item.curPoints
+          delete item.group
+          delete item.polygon
+          delete item.zImage
+          delete item.zr
+        })
+        postTemplateDetail.features.bone_area
+      })
       saveTemplate({
-        data: this.templateDetailList,
+        data: postTemplateDetailList,
         version_id: this.version_id,
         task_id: this.task_id,
         version_desc: this.versionDesForm.version_desc
@@ -421,6 +567,120 @@ export default {
           this.$router.push('/templates/list')
         }
       })
+    },
+    addBoneDistance(bone_distance) {
+      bone_distance.push({
+        describe: '',
+        threshold: 0,
+        value: 0,
+        weight: 0,
+        key: [null, null]
+      })
+    },
+    posePointChange(item, imgDetail) {
+      if (item.key[0] && item.key[1]) {
+        getPointDistance({
+          video_id: this.video_id,
+          frame_index: imgDetail.frame_index,
+          start_point: item.key[0],
+          end_point: item.key[1]
+        }).then(res => {
+          console.log(res)
+          item.value = res.data.distance
+        })
+      }
+    },
+    operation(boneArea) {
+      boneArea.zImage.on('click', (e) => {
+        var circle = new zrender.Circle({
+          style: {
+            stroke: '#f00',
+            fill: '#f00',
+            fontSize: 12,
+            textFill: '#fff'
+
+          },
+          shape: {
+            cx: e.event.zrX,
+            cy: e.event.zrY,
+            r: 3
+          },
+          draggable: true,
+          z: 4
+        })
+        boneArea.group.add(circle)
+        boneArea.curPoints.push(circle)
+
+        // circle.on('drag', (e) => {
+        //   // console.log(e.event.zrX, e.event.zrY)
+        //   boneArea.polygon.attr({
+        //     shape: {
+        //       points: points
+        //     }
+        //   })
+        // })
+
+        if (boneArea.curPoints.length > 2) {
+          var points = boneArea.curPoints.map(curPoint => {
+            return [curPoint.shape.cx, curPoint.shape.cy]
+          })
+          boneArea.poly = points.map(point => {
+            return [parseInt((point[0] * this.videoInfo.width / 540).toFixed(0)), parseInt((point[1] * this.videoInfo.height / 400).toFixed(0))]
+          })
+          if (boneArea.polygon) {
+            boneArea.group.remove(boneArea.polygon)
+          }
+          boneArea.polygon = new zrender.Polygon({
+            shape: {
+              points: points
+            },
+            style: {
+              opacity: 0.5
+            },
+            z: 9
+          })
+          boneArea.group.add(boneArea.polygon)
+        }
+      })
+    },
+    addBoneArea(bone_area) {
+      bone_area.push({
+        describe: '',
+        threshold: 0,
+        value: 0,
+        weight: 0,
+        key: null,
+        poly: []
+      })
+    },
+    editBoneArea(boneArea, imgDetail) {
+      boneArea.zr = zrender.init(this.$refs['canvasDiv' + imgDetail.frame_index][0])
+      boneArea.curPoints = []
+      boneArea.zImage = new zrender.Image({
+        scale: [1, 1],
+        style: {
+          x: 0,
+          y: 0,
+          image: imgDetail.full_frame_path,
+          width: 520,
+          height: 400
+        }
+      })
+      boneArea.zr.add(boneArea.zImage)
+      boneArea.group = new zrender.Group({
+        slient: true // 组内子孙元素是否响应鼠标事件
+      })
+      boneArea.zr.add(boneArea.group)
+      this.operation(boneArea)
+    },
+    clearBoneArea(boneArea, imgDetail) {
+      boneArea.zr.remove(imgDetail.group)
+      boneArea.curPoints = []
+      boneArea.polygon = null
+      boneArea.group = new zrender.Group({
+        slient: true // 组内子孙元素是否响应鼠标事件
+      })
+      boneArea.zr.add(boneArea.group)
     }
   }
 }
