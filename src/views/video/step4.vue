@@ -40,7 +40,7 @@
                 <el-row>
                   <el-col :span="8">
                     连续帧数
-                    <el-tooltip class="item" effect="dark" content="连续帧数建议小于2 *姿态实时检测频率" placement="top-start">
+                    <el-tooltip class="item" effect="dark" content="连续帧数建议小于姿态实时检测频率2倍,加氢站实时帧率8fps" placement="top-start">
                       <i class="el-icon-warning-outline" />
                     </el-tooltip>
                   </el-col>
@@ -166,13 +166,13 @@
                       <el-col :span="4">起始点</el-col>
                       <el-col :offset="1" :span="4">结束点</el-col>
                       <el-col :offset="1" :span="3">距离(px)</el-col>
-                      <el-col :offset="1" :span="3">阈值(±5)
-                        <el-tooltip class="item" effect="dark" content="长度的阈值是一个绝对值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±5" placement="top-start">
+                      <el-col :offset="1" :span="3">偏差范围(px)
+                        <el-tooltip class="item" effect="dark" content="偏差范围是一个绝对值，表示允许的变更后长度与初始长度的差值与初始长度的比值" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
-                      <el-col :offset="1" :span="2">偏差
-                        <el-tooltip class="item" effect="dark" content="长度的阈值是一个绝对值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±5" placement="top-start">
+                      <el-col :offset="1" :span="2">偏差百分比(50%)
+                        <el-tooltip class="item" effect="dark" content="偏差范围百分比不能超过50%" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
@@ -236,8 +236,8 @@
                           <el-button size="mini" type="primary" icon="el-icon-plus" @click="addChildBoneArea(prarentItem)" />
                           <el-button v-show="!item.isEdit" size="mini" type="primary" icon="el-icon-edit" @click="editBoneArea(item, imgDetail)" />
                           <el-button v-show="item.isEdit" size="mini" type="primary" icon="el-icon-document-checked" @click="saveBoneArea(item, imgDetail)" />
+                          <el-button v-show="item.isEdit" size="mini" type="primary" icon="el-icon-refresh" @click="clearBoneArea(item, imgDetail)" />
                           <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteChilidBoneArea(itemIndex, prarentItem)" />
-                          <!-- <el-button size="mini" type="primary" @click="clearBoneArea(item, imgDetail)">重置</el-button> -->
                         </el-col>
                       </el-row>
                     </el-row>
@@ -385,13 +385,13 @@
         <el-col :span="4">起始点</el-col>
         <el-col :offset="1" :span="4">结束点</el-col>
         <el-col :offset="1" :span="3">距离(px)</el-col>
-        <el-col :offset="1" :span="3">阈值(±5)
-          <el-tooltip class="item" effect="dark" content="长度的阈值是一个绝对值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±5" placement="top-start">
+        <el-col :offset="1" :span="3">偏差范围(px)
+          <el-tooltip class="item" effect="dark" content="偏差范围是一个绝对值，表示允许的变更后长度与初始长度的差值与初始长度的比值" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
-        <el-col :offset="1" :span="2">偏差
-          <el-tooltip class="item" effect="dark" content="长度的阈值是一个绝对值，表示允许的变更后长度与初始长度的差值与初始长度的比值，可选±5" placement="top-start">
+        <el-col :offset="1" :span="2">偏差百分比(50%)
+          <el-tooltip class="item" effect="dark" content="偏差范围百分比不能超过50%" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
@@ -703,14 +703,23 @@ export default {
       const postTemplateDetailList = _.cloneDeep(this.templateDetailList)
       _.forEach(postTemplateDetailList, postTemplateDetail => {
         postTemplateDetail.features.one_vote = []
-        _.forEach(postTemplateDetail.features.bone_area, parentItem => {
-          _.forEach(parentItem, childeItem => {
-            delete childeItem.curPoints
-            delete childeItem.group
-            delete childeItem.polygon
-            delete childeItem.zImage
-            delete childeItem.zr
-          })
+        _.forEach(postTemplateDetail.features.inclination, inclinationItem => {
+          if (inclinationItem.weight == -1) {
+            inclinationItem.type = 1
+            postTemplateDetail.features.one_vote.push(inclinationItem)
+          }
+        })
+        _.forEach(postTemplateDetail.features.vertical, verticalItem => {
+          if (verticalItem.weight == -1) {
+            verticalItem.type = 2
+            postTemplateDetail.features.one_vote.push(verticalItem)
+          }
+        })
+        _.forEach(postTemplateDetail.features.ob_list, obItem => {
+          if (obItem.weight == -1) {
+            obItem.type = 3
+            postTemplateDetail.features.one_vote.push(obItem)
+          }
         })
         _.forEach(postTemplateDetail.features.bone_distance, boneItem => {
           delete boneItem.curPoints
@@ -719,23 +728,18 @@ export default {
           delete boneItem.zImage
           delete boneItem.zr
           if (boneItem.weight == -1) {
+            boneItem.type = 4
             postTemplateDetail.features.one_vote.push(boneItem)
           }
         })
-        _.forEach(postTemplateDetail.features.inclination, inclinationItem => {
-          if (inclinationItem.weight == -1) {
-            postTemplateDetail.features.one_vote.push(inclinationItem)
-          }
-        })
-        _.forEach(postTemplateDetail.features.ob_list, obItem => {
-          if (obItem.weight == -1) {
-            postTemplateDetail.features.one_vote.push(obItem)
-          }
-        })
-        _.forEach(postTemplateDetail.features.vertical, verticalItem => {
-          if (verticalItem.weight == -1) {
-            postTemplateDetail.features.one_vote.push(verticalItem)
-          }
+        _.forEach(postTemplateDetail.features.bone_area, parentItem => {
+          _.forEach(parentItem, childeItem => {
+            delete childeItem.curPoints
+            delete childeItem.group
+            delete childeItem.polygon
+            delete childeItem.zImage
+            delete childeItem.zr
+          })
         })
       })
       console.log(postTemplateDetailList)
@@ -872,6 +876,8 @@ export default {
               points: points
             },
             style: {
+              stroke: '#0aead5',
+              fill: '#0aead5',
               opacity: 0.5
             },
             z: 8
@@ -987,6 +993,8 @@ export default {
       boneArea.isEdit = true
       boneArea.zr = zrender.init(this.$refs['canvasDiv' + imgDetail.frame_index][0])
       boneArea.curPoints = []
+      boneArea.polygon = null
+      boneArea.polyString = ''
       boneArea.zImage = new zrender.Image({
         scale: [1, 1],
         style: {
@@ -1017,9 +1025,10 @@ export default {
       boneArea.isEdit = false
     },
     clearBoneArea(boneArea, imgDetail) {
-      boneArea.zr.remove(imgDetail.group)
+      boneArea.zr.remove(boneArea.group)
       boneArea.curPoints = []
       boneArea.polygon = null
+      boneArea.polyString = ''
       boneArea.group = new zrender.Group({
         slient: true // 组内子孙元素是否响应鼠标事件
       })
