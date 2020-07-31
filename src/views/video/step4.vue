@@ -39,7 +39,10 @@
                 </div>
                 <el-row>
                   <el-col :span="8">
-                    连续帧数:
+                    连续帧数
+                    <el-tooltip class="item" effect="dark" content="连续帧数建议小于2 *姿态实时检测频率" placement="top-start">
+                      <i class="el-icon-warning-outline" />
+                    </el-tooltip>
                   </el-col>
                   <el-col :offset="1" :span="11">
                     <el-input v-model="imgDetail.features.constantly_frame[0]" size="mini" />
@@ -47,7 +50,10 @@
                 </el-row>
                 <el-row>
                   <el-col :span="8">
-                    最小出现帧数:
+                    最小出现帧数
+                    <el-tooltip class="item" effect="dark" content="最小帧数建议大于连续帧数一半" placement="top-start">
+                      <i class="el-icon-warning-outline" />
+                    </el-tooltip>
                   </el-col>
                   <el-col :offset="1" :span="11">
                     <el-input v-model="imgDetail.features.constantly_frame[1]" size="mini" />
@@ -70,7 +76,7 @@
                         </el-tooltip>
                       </el-col>
                       <el-col :offset="1" :span="4">权重(0-1)
-                        <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数" placement="top-start">
+                        <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
@@ -100,7 +106,7 @@
                         </el-tooltip>
                       </el-col>
                       <el-col :offset="1" :span="4">权重(0-1)
-                        <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数" placement="top-start">
+                        <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
@@ -130,7 +136,7 @@
                         </el-tooltip>
                       </el-col>
                       <el-col :offset="1" :span="4">权重(0-1)
-                        <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数" placement="top-start">
+                        <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
@@ -171,7 +177,7 @@
                         </el-tooltip>
                       </el-col>
                       <el-col :offset="1" :span="3">权重(0-1)
-                        <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数" placement="top-start">
+                        <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
@@ -291,7 +297,7 @@
           </el-tooltip>
         </el-col>
         <el-col :offset="1" :span="4">权重(0-1)
-          <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数" placement="top-start">
+          <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
@@ -322,7 +328,7 @@
           </el-tooltip>
         </el-col>
         <el-col :offset="1" :span="4">权重(0-1)
-          <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数" placement="top-start">
+          <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
@@ -353,7 +359,7 @@
           </el-tooltip>
         </el-col>
         <el-col :offset="1" :span="4">权重(0-1)
-          <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数" placement="top-start">
+          <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
@@ -390,7 +396,7 @@
           </el-tooltip>
         </el-col>
         <el-col :offset="1" :span="3">权重(0-1)
-          <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数" placement="top-start">
+          <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
@@ -695,8 +701,8 @@ export default {
     saveTemplate() {
       console.log(this.templateDetailList)
       const postTemplateDetailList = _.cloneDeep(this.templateDetailList)
-
       _.forEach(postTemplateDetailList, postTemplateDetail => {
+        postTemplateDetail.features.one_vote = []
         _.forEach(postTemplateDetail.features.bone_area, parentItem => {
           _.forEach(parentItem, childeItem => {
             delete childeItem.curPoints
