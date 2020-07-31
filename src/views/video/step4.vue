@@ -75,7 +75,7 @@
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
-                      <el-col :offset="1" :span="4">权重(0-1)
+                      <el-col :offset="1" :span="4">权重(0-1，-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
@@ -105,7 +105,7 @@
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
-                      <el-col :offset="1" :span="4">权重(0-1)
+                      <el-col :offset="1" :span="4">权重(0-1，-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
@@ -135,7 +135,7 @@
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
-                      <el-col :offset="1" :span="4">权重(0-1)
+                      <el-col :offset="1" :span="4">权重(0-1，-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
@@ -176,7 +176,7 @@
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
                       </el-col>
-                      <el-col :offset="1" :span="3">权重(0-1)
+                      <el-col :offset="1" :span="3">权重(0-1，-1)
                         <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
                           <i class="el-icon-warning-outline" />
                         </el-tooltip>
@@ -296,7 +296,7 @@
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
-        <el-col :offset="1" :span="4">权重(0-1)
+        <el-col :offset="1" :span="4">权重(0-1，-1)
           <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
@@ -327,7 +327,7 @@
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
-        <el-col :offset="1" :span="4">权重(0-1)
+        <el-col :offset="1" :span="4">权重(0-1，-1)
           <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
@@ -358,7 +358,7 @@
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
-        <el-col :offset="1" :span="4">权重(0-1)
+        <el-col :offset="1" :span="4">权重(0-1，-1)
           <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
@@ -395,7 +395,7 @@
             <i class="el-icon-warning-outline" />
           </el-tooltip>
         </el-col>
-        <el-col :offset="1" :span="3">权重(0-1)
+        <el-col :offset="1" :span="3">权重(0-1，-1)
           <el-tooltip class="item" effect="dark" content="权重 0-1，精确两位有效数，-1表示必要条件" placement="top-start">
             <i class="el-icon-warning-outline" />
           </el-tooltip>
