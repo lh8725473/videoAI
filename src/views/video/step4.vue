@@ -232,7 +232,7 @@
                         <el-col :offset="1" :span="8">
                           <el-input v-model="item.polyString" size="mini" readonly />
                         </el-col>
-                        <el-col :offset="1" :span="6">
+                        <el-col :offset="1" :span="8">
                           <el-button size="mini" type="primary" icon="el-icon-plus" @click="addChildBoneArea(prarentItem)" />
                           <el-button v-show="!item.isEdit" size="mini" type="primary" icon="el-icon-edit" @click="editBoneArea(item, imgDetail)" />
                           <el-button v-show="item.isEdit" size="mini" type="primary" icon="el-icon-document-checked" @click="saveBoneArea(item, imgDetail)" />
@@ -812,6 +812,82 @@ export default {
       }
     },
     operation(boneArea) {
+      console.log(boneArea)
+      if (boneArea.poly.length > 0) {
+        _.forEach(boneArea.poly, point => {
+          var circle = new zrender.Circle({
+            style: {
+              stroke: '#f00',
+              fill: '#f00',
+              fontSize: 12,
+              textFill: '#fff',
+              textPosition: [2, -11],
+              text: '[' + point[0] + ',' + point[1] + ']'
+            },
+            shape: {
+              cx: parseInt((point[0] * 640 / this.videoInfo.width).toFixed(0)),
+              cy: parseInt((point[1] * 360 / this.videoInfo.height).toFixed(0)),
+              r: 3
+            },
+            draggable: true,
+            z: 9
+          })
+          boneArea.group.add(circle)
+          boneArea.curPoints.push(circle)
+
+          circle.on('drag', (e) => {
+            console.log(e)
+            e.target.attr({
+              style: {
+                stroke: '#f00',
+                fill: '#f00',
+                fontSize: 12,
+                textFill: '#fff',
+                textPosition: [2, -11],
+                text: '[' + parseInt(((e.target.shape.cx + e.target.position[0]) * this.videoInfo.width / 640).toFixed(0)) + ',' + parseInt(((e.target.shape.cy + e.target.position[1]) * this.videoInfo.height / 360).toFixed(0)) + ']'
+              }
+            })
+            var points = boneArea.curPoints.map(curPoint => {
+              return [curPoint.shape.cx + curPoint.position[0], curPoint.shape.cy + curPoint.position[1]]
+            })
+            boneArea.poly = boneArea.curPoints.map(point => {
+              return [parseInt(((point.shape.cx + point.position[0]) * this.videoInfo.width / 640).toFixed(0)), parseInt(((point.shape.cy + point.position[1]) * this.videoInfo.height / 360).toFixed(0))]
+            })
+            boneArea.polyString = JSON.stringify(boneArea.poly)
+            boneArea.polygon.attr({
+              shape: {
+                points: points
+              }
+            })
+          })
+        })
+
+        if (boneArea.curPoints.length > 2) {
+          var points = boneArea.curPoints.map(curPoint => {
+            return [curPoint.shape.cx + curPoint.position[0], curPoint.shape.cy + curPoint.position[1]]
+          })
+          boneArea.poly = boneArea.curPoints.map(point => {
+            return [parseInt(((point.shape.cx + point.position[0]) * this.videoInfo.width / 640).toFixed(0)), parseInt(((point.shape.cy + point.position[1]) * this.videoInfo.height / 360).toFixed(0))]
+          })
+          boneArea.polyString = JSON.stringify(boneArea.poly)
+          if (boneArea.polygon) {
+            boneArea.group.remove(boneArea.polygon)
+          }
+          boneArea.polygon = new zrender.Polygon({
+            shape: {
+              points: points
+            },
+            style: {
+              stroke: '#0aead5',
+              fill: '#0aead5',
+              opacity: 0.5
+            },
+            z: 8
+          })
+          boneArea.group.add(boneArea.polygon)
+        }
+      }
+
       boneArea.zImage.on('click', (e) => {
         var circle = new zrender.Circle({
           style: {
