@@ -642,8 +642,10 @@ export default {
           response.data.features.vertical_count = 0
           response.data.features.inclination_count = 0
           response.data.features.ob_list_count = 0
-          _.forEach(response.data.features.bone_area, (item) => {
-            item.isEdit = false
+          _.forEach(response.data.features.bone_area, (parentItem) => {
+            _.forEach(parentItem, childeItem => {
+              childeItem.isEdit = false
+            })
           })
           this.computedFeaturesCount(response.data.features)
           part.templateDetail.push(response.data)
