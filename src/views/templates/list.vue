@@ -121,10 +121,12 @@
         border
         fit
         highlight-current-row
+        row-key="id"
         @selection-change="videoSelectionChange"
       >
         <el-table-column
           type="selection"
+          reserve-selection
           width="55"
         />
         <el-table-column label="视频名称">
