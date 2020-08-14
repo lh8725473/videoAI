@@ -54,66 +54,70 @@ export const constantRoutes = [
   //     meta: { title: 'Dashboard', icon: 'dashboard' }
   //   }]
   // },
-  {
-    path: '/',
-    component: Layout,
-    redirect: '/video',
-    children: [{
-      path: 'video',
-      name: 'video',
-      component: () => import('@/views/video/list'),
-      meta: { title: '视频列表', icon: 'dashboard' }
-    }]
-  },
-  {
-    path: '/templates',
-    component: Layout,
-    redirect: '/templates',
-    children: [{
-      path: 'list',
-      name: 'templatesList',
-      component: () => import('@/views/templates/list'),
-      meta: { title: '模板列表', icon: 'form' }
-    },
-    {
-      path: 'mathResult',
-      name: 'mathResult',
-      hidden: true,
-      component: () => import('@/views/templates/mathResult'),
-      meta: { title: '匹配结果', icon: 'form' }
-    }]
-  },
-  {
-    path: '/video',
-    component: Layout,
-    hidden: true,
-    children: [
-      {
-        path: 'step1',
-        name: 'step1',
-        component: () => import('@/views/video/step1'),
-        meta: { title: '轨迹跟踪', icon: 'form' }
-      },
-      {
-        path: 'step2',
-        name: 'step2',
-        component: () => import('@/views/video/step2'),
-        meta: { title: '视频预分段', icon: 'form' }
-      },
-      {
-        path: 'step3',
-        name: 'step3',
-        component: () => import('@/views/video/step3'),
-        meta: { title: '关键帧提取', icon: 'form' }
-      },
-      {
-        path: 'step4',
-        name: 'step4',
-        component: () => import('@/views/video/step4'),
-        meta: { title: '模板提取', icon: 'form' }
-      }
-    ]
-  },
+  // {
+  //   path: '/',
+  //   component: Layout,
+  //   redirect: '/video',
+  //   children: [
+  //     {
+  //       path: 'video',
+  //       name: 'video',
+  //       component: () => import('@/views/video/list'),
+  //       meta: { title: '视频列表', icon: 'dashboard' }
+  //     }
+  //   ]
+  // },
+  // {
+  //   path: '/templates',
+  //   component: Layout,
+  //   redirect: '/templates',
+  //   children: [
+  //     {
+  //       path: 'list',
+  //       name: 'templatesList',
+  //       component: () => import('@/views/templates/list'),
+  //       meta: { title: '模板列表', icon: 'form' }
+  //     },
+  //     {
+  //       path: 'mathResult',
+  //       name: 'mathResult',
+  //       hidden: true,
+  //       component: () => import('@/views/templates/mathResult'),
+  //       meta: { title: '匹配结果', icon: 'form' }
+  //     }
+  //   ]
+  // },
+  // {
+  //   path: '/video',
+  //   component: Layout,
+  //   hidden: true,
+  //   children: [
+  //     {
+  //       path: 'step1',
+  //       name: 'step1',
+  //       component: () => import('@/views/video/step1'),
+  //       meta: { title: '轨迹跟踪', icon: 'form' }
+  //     },
+  //     {
+  //       path: 'step2',
+  //       name: 'step2',
+  //       component: () => import('@/views/video/step2'),
+  //       meta: { title: '视频预分段', icon: 'form' }
+  //     },
+  //     {
+  //       path: 'step3',
+  //       name: 'step3',
+  //       component: () => import('@/views/video/step3'),
+  //       meta: { title: '关键帧提取', icon: 'form' }
+  //     },
+  //     {
+  //       path: 'step4',
+  //       name: 'step4',
+  //       component: () => import('@/views/video/step4'),
+  //       meta: { title: '模板提取', icon: 'form' }
+  //     }
+  //   ]
+  // },
 
   // {
   //   path: '/example',
@@ -137,27 +141,53 @@ export const constantRoutes = [
   //   ]
   // },
 
+  // {
+  //   path: '/math',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: 'list',
+  //       name: 'mathList',
+  //       component: () => import('@/views/templates/mathResultList'),
+  //       meta: { title: '匹配结果列表', icon: 'table' }
+  //     }
+  //   ]
+  // },
+  // {
+  //   path: '/task',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: 'list',
+  //       name: 'taskList',
+  //       component: () => import('@/views/templates/taskList'),
+  //       meta: { title: '任务列表', icon: 'nested' }
+  //     }
+  //   ]
+  // },
   {
-    path: '/math',
+    path: '/project',
     component: Layout,
     children: [
       {
-        path: 'list',
-        name: 'mathList',
-        component: () => import('@/views/templates/mathResultList'),
-        meta: { title: '匹配结果列表', icon: 'table' }
-      }
-    ]
-  },
-  {
-    path: '/task',
-    component: Layout,
-    children: [
+        path: 'projectList',
+        name: 'projectList',
+        component: () => import('@/views/project/projectList'),
+        meta: { title: '项目列表', icon: 'nested' }
+      },
       {
-        path: 'list',
-        name: 'taskList',
-        component: () => import('@/views/templates/taskList'),
-        meta: { title: '任务列表', icon: 'nested' }
+        path: 'projectModuleList',
+        name: 'projectModuleList',
+        hidden: true,
+        component: () => import('@/views/project/projectModuleList'),
+        meta: { title: '项目-模板列表', icon: 'nested' }
+      },
+      {
+        path: 'projectToModule',
+        name: 'projectToModule',
+        hidden: true,
+        component: () => import('@/views/project/projectToModule'),
+        meta: { title: '模块关联', icon: 'nested' }
       }
     ]
   },
@@ -235,11 +265,12 @@ export const constantRoutes = [
   { path: '*', redirect: '/404', hidden: true }
 ]
 
-const createRouter = () => new Router({
-  // mode: 'history', // require service support
-  scrollBehavior: () => ({ y: 0 }),
-  routes: constantRoutes
-})
+const createRouter = () =>
+  new Router({
+    // mode: 'history', // require service support
+    scrollBehavior: () => ({ y: 0 }),
+    routes: constantRoutes
+  })
 
 const router = createRouter()
 

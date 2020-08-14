@@ -38,7 +38,7 @@ Vue.config.productionTip = false
 
 // Vue.prototype.$socket = socket('ws://192.168.100.210:5005/video_template')
 // Vue.prototype.$socket = socket('ws://192.168.100.178:5700/video_template')
-Vue.prototype.$socket = socket(process.env.VUE_APP_BASE_WS)
+// Vue.prototype.$socket = socket(process.env.VUE_APP_BASE_WS)
 
 new Vue({
   el: '#app',

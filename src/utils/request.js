@@ -14,7 +14,23 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     // do something before request is sent
+    if (config.method === 'get') {
+      if (config.params) {
+        config.params.user_id = 1
+      } else {
+        config.params = {}
+        config.params.user_id = 1
+      }
+    }
 
+    if (config.method === 'post') {
+      if (config.data) {
+        config.data.user_id = 1
+      } else {
+        config.data = {}
+        config.data.user_id = 1
+      }
+    }
     if (store.getters.token) {
       // let each request carry token
       // ['X-Token'] is a custom headers key
