@@ -301,7 +301,12 @@ export default {
         if (data.pose_result) {
           bbox = data.pose_result.bbox
         } else {
-          bbox = data.pose[data.index].bbox
+          if (data.index === -1) {
+            this.$message.error('当前帧未跟踪到人')
+            return
+          } else {
+            bbox = data.pose[data.index].bbox
+          }
         }
         var rectX = 0
         var rectY = 0
